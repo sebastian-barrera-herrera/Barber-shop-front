@@ -26,7 +26,11 @@ propia página en `filo.com/<su-nombre>` y su panel. **Next.js 16 · React 19 ·
 - **Hoy**: resumen, agenda con acciones de un toque, ingresos de la semana, servicios populares.
 - **Calendario** día / semana / mes (arrastra una cita para moverla de hora o de profesional; Esc cancela) · **Citas** con filtros · **Clientes** con ficha e historial.
 - **Mensajes** · **Servicios** · **Profesionales** (servicios, horario, días libres, acceso) · **Mi horario**.
-- **Pagos** (conectar Wompi) · **Reportes** · **Configuración** (negocio, horario, redes, apariencia, reservas).
+- **Pagos** (conectar Wompi) · **Reportes** · **Configuración** (negocio, horario, redes, apariencia,
+  reservas, **Mi web** con vista previa y enlace para compartir, y **Suscripción** con los días
+  restantes y el pago del plan).
+- **Profesionales → Acceso**: se les invita por correo (cada uno crea su contraseña) y se define qué ven:
+  su agenda o la de todos, clientes, mensajes y reportes. El menú se arma con esos permisos.
 - Buscador global (atajo `/`), avisos de nuevas reservas, mensajes y pagos. Todo se actualiza solo.
 
 ## 1. Requisitos
