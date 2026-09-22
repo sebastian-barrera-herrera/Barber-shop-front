@@ -8,7 +8,9 @@ import { useAuth } from '@/lib/admin/auth';
 import { useUnreadMessages } from '@/lib/admin/hooks';
 import { useBusiness } from '@/lib/admin/queries';
 import type { Role } from '@/lib/admin/types';
+import { siteHref } from '@/lib/site-paths';
 import { GlobalSearch } from './global-search';
+import { SubscriptionBanner } from './subscription-banner';
 import { NotificationsButton } from './notifications-button';
 
 interface NavItem {
@@ -91,7 +93,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const business = useBusiness();
   const isStaff = user?.role === 'OWNER' || user?.role === 'ADMIN';
-  const unread = useUnreadMessages(status === 'authenticated' && isStaff);
+  const canSeeMessages = isStaff || !!user?.access?.messages;
+  const unread = useUnreadMessages(status === 'authenticated' && canSeeMessages);
   const [more, setMore] = useState(false);
 
   useEffect(() => {
@@ -107,7 +110,16 @@ export function AdminShell({ children }: { children: ReactNode }) {
     );
   }
 
-  const items = NAV.filter((n) => n.roles.includes(user.role));
+  // El rol abre la puerta; los permisos que le dio el dueño deciden el resto.
+  const allowed = (n: NavItem) => {
+    if (!n.roles.includes(user.role)) {
+      if (n.href === '/admin/mensajes' && user.access?.messages) return true;
+      if (n.href === '/admin/reportes' && user.access?.reports) return true;
+      return false;
+    }
+    return true;
+  };
+  const items = NAV.filter(allowed);
   const isActive = (href: string) =>
     href === '/admin' ? pathname === '/admin' : pathname.startsWith(href);
   const badge = (n: NavItem) => (n.badge === 'messages' && unread.data ? unread.data : 0);
@@ -146,7 +158,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
           <Link href="/admin" className="font-display truncate px-2 text-xl">
             {business.data?.name ?? 'Panel'}
           </Link>
-          {isStaff && <NotificationsButton />}
+          {canSeeMessages && <NotificationsButton />}
         </div>
         <div className="mt-5 px-1">
           <GlobalSearch timezone={tz} />
@@ -163,11 +175,11 @@ export function AdminShell({ children }: { children: ReactNode }) {
           <p className="text-stone text-xs">{ROLE_LABEL[user.role]}</p>
           <div className="mt-3 flex gap-4 text-sm">
             <Link
-              href="/"
+              href={business.data ? siteHref(business.data.slug) : '/'}
               target="_blank"
               className="text-stone hover:text-ink underline-offset-2 hover:underline"
             >
-              Ver web
+              Ver mi web
             </Link>
             <button
               type="button"
@@ -185,10 +197,13 @@ export function AdminShell({ children }: { children: ReactNode }) {
         <Link href="/admin" className="font-display truncate text-lg">
           {business.data?.name ?? 'Panel'}
         </Link>
-        {isStaff && <NotificationsButton />}
+        {canSeeMessages && <NotificationsButton />}
       </div>
 
-      <div className="min-w-0 pb-24 md:pb-0">{children}</div>
+      <div className="min-w-0 pb-24 md:pb-0">
+        <SubscriptionBanner />
+        {children}
+      </div>
 
       <nav
         aria-label="Panel"
