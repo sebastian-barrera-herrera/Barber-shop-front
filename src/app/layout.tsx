@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Fraunces, Hanken_Grotesk } from 'next/font/google';
 import type { CSSProperties, ReactNode } from 'react';
-import { Providers } from '@/components/providers';
 import { publicApi, safely } from '@/lib/api';
 import { resolveTheme, themeStyle } from '@/lib/theme';
 import './globals.css';
@@ -66,9 +65,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       style={themeStyle(theme) as CSSProperties}
       data-preset={business?.branding.preset ?? 'studio'}
     >
-      <body className="bg-paper text-ink min-h-dvh">
-        <Providers>{children}</Providers>
-      </body>
+      <body className="bg-paper text-ink min-h-dvh">{children}</body>
     </html>
   );
 }

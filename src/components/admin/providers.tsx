@@ -1,6 +1,7 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MotionConfig } from 'motion/react';
 import { useState, type ReactNode } from 'react';
 import { ToastProvider } from '@/components/ui/toast';
 import { ApiError } from '@/lib/api';
@@ -22,7 +23,9 @@ export function AdminProviders({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={client}>
       <AuthProvider>
-        <ToastProvider>{children}</ToastProvider>
+        <MotionConfig reducedMotion="user">
+          <ToastProvider>{children}</ToastProvider>
+        </MotionConfig>
       </AuthProvider>
     </QueryClientProvider>
   );
