@@ -1,0 +1,144 @@
+@import 'tailwindcss';
+
+/*
+ * "La libreta del salón": papel, tinta y reglas finas.
+ * Los valores reales llegan como variables en <html> según el negocio (src/lib/theme.ts).
+ */
+:root {
+  --paper: #f4f0e8;
+  --paper-2: #ece6da;
+  --ink: #141412;
+  --stone: #6f695f;
+  --line: #d9d2c5;
+  --accent: #a07c42;
+  --brand: #141412;
+  --on-brand: #ffffff;
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-ink: var(--ink);
+  --color-stone: var(--stone);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-brand: var(--brand);
+  --color-on-brand: var(--on-brand);
+  --font-display: var(--font-fraunces), 'Iowan Old Style', Georgia, serif;
+  --font-sans: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
+  --ease-soft: var(--ease-out-soft);
+}
+
+@layer base {
+  html {
+    background: var(--paper);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    font-feature-settings: 'ss01', 'cv11';
+  }
+
+  ::selection {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Etiqueta pequeña con tracking amplio: el "encabezado de libreta". */
+@utility eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--stone);
+}
+
+/* Relleno punteado entre nombre y precio, como en una carta impresa. */
+@utility leader {
+  flex: 1 1 auto;
+  min-width: 1.5rem;
+  border-bottom: 1px dotted color-mix(in srgb, var(--stone) 70%, transparent);
+  transform: translateY(-0.3em);
+}
+
+/* Borde perforado del ticket de reserva. */
+@utility perforation {
+  background-image: radial-gradient(circle, var(--paper) 5px, transparent 5.5px);
+  background-size: 16px 12px;
+  background-repeat: repeat-x;
+  background-position: center;
+  height: 12px;
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      animation: reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 55%;
+    }
+  }
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(105%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@utility animate-rise {
+  animation: rise 900ms var(--ease-out-soft) both;
+}
+
+@keyframes ticket-print {
+  from {
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(-12px);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    transform: translateY(0);
+  }
+}
+
+@utility animate-print {
+  animation: ticket-print 700ms var(--ease-out-soft) both;
+}
