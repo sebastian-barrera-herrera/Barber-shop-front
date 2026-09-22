@@ -1,6 +1,6 @@
 'use client';
 
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ApiError, publicApi } from '@/lib/api';
@@ -200,117 +200,119 @@ export function BookingFlow({
   );
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pt-8 pb-16 sm:px-6 md:pt-14">
-      <div className="grid gap-10 md:grid-cols-[1fr_340px] md:gap-14">
-        <div className="min-w-0">
-          <nav aria-label="Progreso de la reserva" className="mb-6">
-            <ol className="flex gap-1.5">
-              {STEPS.map((s, i) => (
-                <li
-                  key={s.key}
-                  aria-current={i === stepIndex ? 'step' : undefined}
-                  className={`h-0.5 flex-1 rounded-full transition-colors duration-500 ${i <= stepIndex ? 'bg-ink' : 'bg-line'}`}
-                >
-                  <span className="sr-only">
-                    Paso {i + 1}: {s.title}
-                  </span>
-                </li>
-              ))}
-            </ol>
-            <p className="eyebrow mt-3">
-              Paso {stepIndex + 1} de {STEPS.length}
-            </p>
-          </nav>
+    <MotionConfig reducedMotion="user">
+      <div className="mx-auto max-w-6xl px-4 pt-8 pb-16 sm:px-6 md:pt-14">
+        <div className="grid gap-10 md:grid-cols-[1fr_340px] md:gap-14">
+          <div className="min-w-0">
+            <nav aria-label="Progreso de la reserva" className="mb-6">
+              <ol className="flex gap-1.5">
+                {STEPS.map((s, i) => (
+                  <li
+                    key={s.key}
+                    aria-current={i === stepIndex ? 'step' : undefined}
+                    className={`h-0.5 flex-1 rounded-full transition-colors duration-500 ${i <= stepIndex ? 'bg-ink' : 'bg-line'}`}
+                  >
+                    <span className="sr-only">
+                      Paso {i + 1}: {s.title}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+              <p className="eyebrow mt-3">
+                Paso {stepIndex + 1} de {STEPS.length}
+              </p>
+            </nav>
 
-          <h1
-            ref={headingRef}
-            tabIndex={-1}
-            className="font-display text-[clamp(2.2rem,5.5vw,3.6rem)] leading-[1] font-light tracking-[-0.025em] focus:outline-none"
-          >
-            {STEPS[stepIndex].title}
-          </h1>
-
-          {service && step !== 'details' && (
-            <p className="text-stone mt-4 md:hidden">
-              {service.name} · {formatMoney(service.priceCents, business.currency)}
-              {professional && proParam !== ANY && step === 'time'
-                ? ` · con ${professional.name}`
-                : ''}
-            </p>
-          )}
-
-          {notice && (
-            <p
-              role="alert"
-              className="mt-6 rounded-xl border border-[#C8912E]/50 bg-[#C8912E]/[0.08] px-4 py-3 text-sm"
+            <h1
+              ref={headingRef}
+              tabIndex={-1}
+              className="font-display text-[clamp(2.2rem,5.5vw,3.6rem)] leading-[1] font-light tracking-[-0.025em] focus:outline-none"
             >
-              {notice}
-            </p>
-          )}
+              {STEPS[stepIndex].title}
+            </h1>
 
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={step}
-              initial={{ opacity: 0, x: 16 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -16 }}
-              transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-              className="mt-8"
-            >
-              {step === 'service' && (
-                <>
-                  {professional && (
-                    <p className="text-stone -mt-2 mb-6">
-                      Servicios que realiza {professional.name}.{' '}
-                      <button
-                        type="button"
-                        className="underline underline-offset-2"
-                        onClick={() => navigate({ con: null })}
-                      >
-                        Ver todos
-                      </button>
-                    </p>
-                  )}
-                  <StepService
-                    groups={visibleCatalog}
-                    currency={business.currency}
-                    selectedSlug={service?.slug ?? null}
-                    onSelect={selectService}
+            {service && step !== 'details' && (
+              <p className="text-stone mt-4 md:hidden">
+                {service.name} · {formatMoney(service.priceCents, business.currency)}
+                {professional && proParam !== ANY && step === 'time'
+                  ? ` · con ${professional.name}`
+                  : ''}
+              </p>
+            )}
+
+            {notice && (
+              <p
+                role="alert"
+                className="mt-6 rounded-xl border border-[#C8912E]/50 bg-[#C8912E]/[0.08] px-4 py-3 text-sm"
+              >
+                {notice}
+              </p>
+            )}
+
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={step}
+                initial={{ opacity: 0, x: 16 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -16 }}
+                transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                className="mt-8"
+              >
+                {step === 'service' && (
+                  <>
+                    {professional && (
+                      <p className="text-stone -mt-2 mb-6">
+                        Servicios que realiza {professional.name}.{' '}
+                        <button
+                          type="button"
+                          className="underline underline-offset-2"
+                          onClick={() => navigate({ con: null })}
+                        >
+                          Ver todos
+                        </button>
+                      </p>
+                    )}
+                    <StepService
+                      groups={visibleCatalog}
+                      currency={business.currency}
+                      selectedSlug={service?.slug ?? null}
+                      onSelect={selectService}
+                    />
+                  </>
+                )}
+                {step === 'professional' && service && (
+                  <StepProfessional
+                    professionals={eligible}
+                    selected={proParam}
+                    onSelect={(slug) => navigate({ con: slug, fecha: null, hora: null })}
                   />
-                </>
-              )}
-              {step === 'professional' && service && (
-                <StepProfessional
-                  professionals={eligible}
-                  selected={proParam}
-                  onSelect={(slug) => navigate({ con: slug, fecha: null, hora: null })}
-                />
-              )}
-              {step === 'time' && service && (
-                <StepTime
-                  serviceId={service.id}
-                  professionalId={proParam !== ANY ? professional?.id : undefined}
-                  timezone={tz}
-                  maxAdvanceDays={business.booking.maxAdvanceDays}
-                  date={date}
-                  onDate={(d, replace) => navigate({ fecha: d, hora: null }, replace)}
-                  onSlot={selectSlot}
-                />
-              )}
-              {step === 'details' && (
-                <div className="grid gap-8">
-                  <div className="md:hidden">{ticket}</div>
-                  <StepDetails onSubmit={submit} submitting={submitting} error={error} />
-                </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </div>
+                )}
+                {step === 'time' && service && (
+                  <StepTime
+                    serviceId={service.id}
+                    professionalId={proParam !== ANY ? professional?.id : undefined}
+                    timezone={tz}
+                    maxAdvanceDays={business.booking.maxAdvanceDays}
+                    date={date}
+                    onDate={(d, replace) => navigate({ fecha: d, hora: null }, replace)}
+                    onSlot={selectSlot}
+                  />
+                )}
+                {step === 'details' && (
+                  <div className="grid gap-8">
+                    <div className="md:hidden">{ticket}</div>
+                    <StepDetails onSubmit={submit} submitting={submitting} error={error} />
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
 
-        <aside className="hidden md:block" aria-label="Resumen de tu cita">
-          <div className="sticky top-24">{ticket}</div>
-        </aside>
+          <aside className="hidden md:block" aria-label="Resumen de tu cita">
+            <div className="sticky top-24">{ticket}</div>
+          </aside>
+        </div>
       </div>
-    </div>
+    </MotionConfig>
   );
 }

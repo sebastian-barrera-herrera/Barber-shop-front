@@ -20,6 +20,8 @@ export interface NewAppointmentPrefill {
   date?: string;
   minute?: number;
   professionalId?: string;
+  /** Desde la ficha del cliente */
+  customer?: AdminCustomer;
 }
 
 /** "Nueva cita" en una sola pantalla: cliente → servicio → profesional → día y hora. */
@@ -58,7 +60,7 @@ export function NewAppointmentDrawer({
   useEffect(() => {
     if (!open) return;
     setQuery('');
-    setCustomer(null);
+    setCustomer(prefill?.customer ?? null);
     setIsNew(false);
     setName('');
     setPhone('');

@@ -1,33 +1,42 @@
 # Studio Booking — Web
 
-Web pública y panel administrativo de la plataforma de reservas para barberías, salones, spa y estudios de uñas.
-Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · Motion · Three.js.
+Web pública y panel administrativo de la plataforma de reservas para barberías, salones de belleza, spa y
+estudios de uñas. **Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · TanStack Query · Motion · Three.js.**
 
-La API vive en [barber-shop-back](https://github.com/sebastian-barrera-herrera/barber-shop-back).
-Arquitectura y decisiones: [docs/PLAN_TECNICO.md](docs/PLAN_TECNICO.md).
+- API: [barber-shop-back](https://github.com/sebastian-barrera-herrera/barber-shop-back) (incluye guías de Wompi y despliegue)
+- Arquitectura y decisiones: [docs/PLAN_TECNICO.md](docs/PLAN_TECNICO.md)
 
-## Estado
+## Qué incluye
 
-| Paso | Qué | Estado |
-|---|---|---|
-| 10 | Landing (hero 3D, carta de servicios, equipo, horario y ubicación) + SEO | ✅ |
-| 11 | Reserva en 4 pantallas + página "mi cita" (ver, calendario, cancelar) | ✅ |
-| 12 | Panel: login, "Hoy" (resumen, agenda con acciones rápidas, ingresos, servicios populares), nueva cita | ✅ |
-| 13 | Calendario Día / Semana / Mes: crear tocando un hueco, ver, confirmar, cancelar, completar y mover | ✅ |
-| 14+ | Mensajes, pagos, configuración, gestión de servicios/profesionales/clientes | Pendiente |
+**Web pública**
+- Landing con hero editorial, objeto 3D por tipo de negocio, carta de servicios con precios, equipo, horario
+  con "abierto ahora", ubicación y botón de WhatsApp.
+- Reserva en 4 pantallas: servicio → profesional ("me da igual") → fecha y hora → tus datos. Sin cuenta.
+- "Mi cita" (enlace privado): agregar al calendario, cancelar dentro del plazo, chatear con el negocio y pagar en línea.
 
-## Requisitos
+**Panel** (`/admin`)
+- **Hoy**: resumen, agenda con acciones de un toque, ingresos de la semana, servicios populares.
+- **Calendario** día / semana / mes · **Citas** con filtros · **Clientes** con ficha e historial.
+- **Mensajes** · **Servicios** · **Profesionales** (servicios, horario, días libres, acceso) · **Mi horario**.
+- **Pagos** (conectar Wompi) · **Reportes** · **Configuración** (negocio, horario, redes, apariencia, reservas).
+- Buscador global (atajo `/`), avisos de nuevas reservas, mensajes y pagos. Todo se actualiza solo.
 
-- Node.js 20 o superior
-- La API corriendo (ver el README del back)
+## 1. Requisitos
 
-## Puesta en marcha
+- Node.js 20+
+- La API corriendo (ver su README)
+
+## 2. Instalación y ejecución
 
 ```bash
+git clone git@github.com:sebastian-barrera-herrera/Barber-shop-front.git
+cd Barber-shop-front
 cp .env.example .env.local
 npm install
-npm run dev          # http://localhost:3000
+npm run dev          # http://localhost:3000   ·   panel: http://localhost:3000/admin
 ```
+
+## 3. Variables de entorno
 
 | Variable | Para qué |
 |---|---|
@@ -36,72 +45,66 @@ npm run dev          # http://localhost:3000
 | `NEXT_PUBLIC_BUSINESS_SLUG` | Qué negocio muestra esta web (`studio-demo` con los datos de prueba) |
 | `NEXT_PUBLIC_SITE_URL` | Dominio público (canonical, sitemap, Open Graph) |
 
-## Rutas
+Las variables `NEXT_PUBLIC_*` quedan fijas al compilar.
+
+## 4. Rutas
 
 | Ruta | Página |
 |---|---|
-| `/` | Landing |
-| `/servicios` | Carta completa |
-| `/profesionales` | Equipo |
-| `/contacto` | Horario, dirección y contacto |
-| `/reservar` | Flujo de reserva (`?servicio=&con=&fecha=&hora=`) |
-| `/cita/[token]` | Ver o cancelar una cita (enlace privado, no indexado) |
+| `/` · `/servicios` · `/profesionales` · `/contacto` | Web pública |
+| `/reservar` | Reserva (`?servicio=&con=&fecha=&hora=`, el botón "atrás" funciona) |
+| `/cita/[token]` | Ver, cancelar, chatear y pagar (privada, no indexada) |
 | `/admin/login` | Entrada al panel |
-| `/admin` | Hoy: resumen del día y agenda |
-| `/admin/calendario` | Calendario (`?vista=semana\|mes&fecha=&pro=`) |
+| `/admin`, `/admin/calendario`, `/admin/citas`, `/admin/clientes`, `/admin/mensajes`, `/admin/servicios`, `/admin/profesionales`, `/admin/mi-horario`, `/admin/pagos`, `/admin/reportes`, `/admin/configuracion` | Panel (según rol) |
 
-Desde cualquier fila de la carta se entra con el servicio ya elegido (`/reservar?servicio=corte-clasico`);
-desde el equipo, con el profesional (`/reservar?con=carlos`).
+## 5. Diseño
 
-## Diseño
+Concepto **"la libreta del salón"**: la carta de precios de la pared y el ticket de la cita, en vez de una plantilla de SaaS.
 
-Concepto **"la libreta del salón"**: la carta de precios de la pared y el ticket de la cita, en lugar de una
-plantilla de SaaS.
+- **Marca sin tocar código:** 5 estilos (`studio`, `barber`, `spa`, `nails`, `beauty`) en `src/lib/theme.ts`,
+  aplicados desde el servidor como variables CSS (sin parpadeo). Los colores propios se aceptan solo si tienen
+  contraste suficiente; los estilos cumplen WCAG AA (verificado en tests).
+- **Tipografía:** Fraunces (títulos) y Hanken Grotesk (texto) con `next/font`.
+- **Three.js solo en el hero:** un objeto cuyo material cambia por estilo (cerámica, latón, piedra, laca, seda).
+  Se descarga después de que la página ya se puede usar, y no se carga con "reducir movimiento", ahorro de
+  datos, sin WebGL o con animaciones apagadas.
+- **Animaciones sin bloquear contenido:** el título y las apariciones al hacer scroll son CSS; Motion se usa en
+  la reserva y el panel.
 
-- **Marca por negocio sin tocar código.** `src/lib/theme.ts` tiene 5 presets (`studio`, `barber`, `spa`,
-  `nails`, `beauty`). El servidor inyecta los colores como variables CSS en `<html>`, sin parpadeo al cargar.
-  Los colores personalizados solo se aplican si tienen contraste suficiente.
-- **Tipografía:** Fraunces (títulos) y Hanken Grotesk (texto), servidas por `next/font`.
-- **Three.js solo en el hero.** Un único objeto cuyo material cambia según el preset: cerámica, latón, piedra,
-  laca o seda. Se carga aparte y después de que la página ya se puede usar, y no carga con
-  "reducir movimiento", ahorro de datos, sin WebGL o con animaciones apagadas; en esos casos se ve una silueta
-  estática. Se pausa fuera de pantalla.
-- **Animaciones sin JavaScript donde importa.** El título y las apariciones al hacer scroll son CSS puro
-  (`animation-timeline: view()`): el contenido nunca queda oculto esperando a que cargue la app. Motion se usa en
-  las transiciones entre pasos de la reserva.
+## 6. Accesibilidad
 
-## Panel
-
-- **Sesión:** el token de acceso vive solo en memoria; la renovación usa la cookie httpOnly de la API
-  (el JavaScript no puede leerla). Si vence, se renueva una sola vez aunque haya varias peticiones a la vez.
-  La protección de rutas es del lado del cliente; la seguridad real la aplica la API en cada petición.
-- **Siempre al día:** la agenda y el calendario se recargan cada 30 s y al volver a la pestaña, así que una
-  reserva hecha en la web aparece sola. Cada acción (confirmar, mover…) refresca todo lo relacionado.
-- **Roles:** dueño y administrador crean y mueven citas; el profesional ve solo su agenda y cambia estados.
-- **Calendario:** Día = una columna por profesional, con las horas fuera de su horario rayadas; Semana = una
-  columna por día (filtrable por profesional); Mes = cuántas citas hay cada día. Las citas que se cruzan se
-  muestran lado a lado. Arrastrar para mover queda para la fase 2; por ahora se mueve desde el detalle,
-  solo a horas libres.
-
-## Accesibilidad
-
-Enlace "saltar al contenido", foco visible, opciones de la reserva como `radiogroup`, foco al título en cada
-paso, errores de formulario asociados a su campo, estados con texto (no solo color) y respeto por
+Navegación por teclado, foco visible, "saltar al contenido", opciones como `radiogroup`/`switch`, paneles con foco
+atrapado y Esc, errores asociados a su campo, estados con texto (no solo color), contraste AA y
 `prefers-reduced-motion`.
 
-## SEO
+## 7. SEO
 
-Metadata por página, Open Graph con imagen generada (`/opengraph-image`), favicon con la inicial del negocio,
-`sitemap.xml`, `robots.txt` y datos estructurados schema.org (`HairSalon`, `DaySpa`, `NailSalon`…) con horario,
-dirección y precios.
+Metadata por página, Open Graph con imagen generada, favicon con la inicial del negocio, `sitemap.xml`,
+`robots.txt` (excluye `/admin` y `/cita`) y datos estructurados schema.org con horario, dirección y precios.
 
-## Producción
+## 8. Rendimiento
+
+Páginas públicas prerenderizadas y revalidadas cada minuto (ISR). En la landing se cargan unos 143 KB
+comprimidos de JavaScript antes del `load` (principalmente React/Next); Three.js (~186 KB) llega después y
+solo si aplica. Imágenes con `next/image`, fuentes autoalojadas.
+
+## 9. Sesión del panel
+
+El token de acceso vive solo en memoria; la renovación usa la cookie httpOnly de la API. La protección de rutas
+es del lado del cliente; la seguridad real la aplica la API en cada petición (roles y negocio).
+
+## 10. Tests
+
+```bash
+npm test             # dinero, fechas, zona horaria, contraste de los estilos, archivo de calendario
+npm run typecheck
+```
+
+## 11. Producción y Docker
 
 ```bash
 npm run build && npm start
 ```
-
-Docker (salida `standalone`):
 
 ```bash
 docker build -f docker/Dockerfile -t studio-web \
@@ -109,8 +112,8 @@ docker build -f docker/Dockerfile -t studio-web \
   --build-arg NEXT_PUBLIC_SITE_URL=https://tudominio.com .
 ```
 
-Todo junto (base de datos + API + web) desde el repo back:
+Todo junto (base de datos + API + web) desde el repo del back:
 `docker compose -f docker-compose.yml -f docker-compose.full.yml up -d --build`.
 
-Si la API no responde durante el build, las páginas se generan con un aviso temporal y se regeneran solas
-al minuto con los datos reales.
+Si la API no responde durante la compilación, las páginas se generan con un aviso temporal y se regeneran
+solas al minuto con los datos reales.

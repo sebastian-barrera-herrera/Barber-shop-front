@@ -5,6 +5,7 @@ import type {
   CatalogGroup,
   DaySlots,
   PublicAppointment,
+  PublicMessage,
   PublicProfessional,
   PublicService,
 } from './types';
@@ -86,6 +87,24 @@ export const publicApi = {
     }),
   appointment: (token: string) =>
     request<PublicAppointment>(pub(`/appointments/by-token/${encodeURIComponent(token)}`)),
+  messages: (token: string) =>
+    request<{ messages: PublicMessage[] }>(
+      pub(`/appointments/by-token/${encodeURIComponent(token)}/messages`),
+    ),
+  sendMessage: (token: string, body: string) =>
+    request<PublicMessage>(pub(`/appointments/by-token/${encodeURIComponent(token)}/messages`), {
+      method: 'POST',
+      body: { body },
+    }),
+  startPayment: (token: string) =>
+    request<{ url: string }>(pub(`/appointments/by-token/${encodeURIComponent(token)}/payments`), {
+      method: 'POST',
+    }),
+  verifyPayment: (token: string, transactionId: string) =>
+    request<{ status: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED' }>(
+      pub(`/appointments/by-token/${encodeURIComponent(token)}/payments/verify`),
+      { method: 'POST', body: { transactionId } },
+    ),
   cancel: (token: string, reason?: string) =>
     request<PublicAppointment>(pub(`/appointments/by-token/${encodeURIComponent(token)}/cancel`), {
       method: 'POST',
