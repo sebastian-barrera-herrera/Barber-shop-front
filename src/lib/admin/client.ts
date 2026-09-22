@@ -1,4 +1,4 @@
-import { ApiError } from '../api';
+import { ApiError, type RegisterPayload } from '../api';
 import type { SessionUser } from './types';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
@@ -43,6 +43,25 @@ export async function login(email: string, password: string): Promise<SessionUse
   const data = (await res.json()) as { accessToken: string; user: SessionUser };
   setSession(data.accessToken, data.user);
   return data.user;
+}
+
+/** Registra un negocio nuevo y deja la sesión abierta, como si hubiera iniciado sesión. */
+export async function registerBusiness(
+  payload: RegisterPayload,
+): Promise<{ user: SessionUser; business: { slug: string; style: string } }> {
+  const res = await raw('/platform/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw await toError(res);
+  const data = (await res.json()) as {
+    accessToken: string;
+    user: SessionUser;
+    business: { slug: string; style: string };
+  };
+  setSession(data.accessToken, data.user);
+  return { user: data.user, business: data.business };
 }
 
 /** Recupera la sesión con la cookie (al abrir el panel o cuando vence el token). */

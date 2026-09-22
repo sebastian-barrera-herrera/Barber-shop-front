@@ -4,8 +4,9 @@ import type { ComponentProps, ReactNode } from 'react';
 type Variant = 'primary' | 'secondary' | 'ghost';
 type Size = 'md' | 'lg';
 
+// El radio y la caja del texto vienen del tema: píldora en spa, esquina recta y mayúsculas en barbería.
 const base =
-  'inline-flex items-center justify-center gap-2 rounded-full font-medium transition-[background-color,color,border-color,transform] duration-200 ease-soft active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 select-none';
+  'inline-flex items-center justify-center gap-2 rounded-[var(--radius-btn)] font-medium transition-[background-color,color,border-color,transform] duration-200 ease-soft active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 select-none [[data-site-style=barber]_&]:uppercase [[data-site-style=barber]_&]:tracking-[0.08em] [[data-site-style=barber]_&]:font-semibold';
 
 const variants: Record<Variant, string> = {
   primary: 'bg-brand text-on-brand hover:bg-brand/88',

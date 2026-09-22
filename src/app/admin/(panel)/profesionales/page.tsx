@@ -15,7 +15,10 @@ import { useToast } from '@/components/ui/toast';
 import { useAuth } from '@/lib/admin/auth';
 import {
   useCategories,
-  useCreateAccount,
+  useInviteProfessional,
+  useResendInvitation,
+  useRevokeAccess,
+  useUpdateAccess,
   useDeleteProfessional,
   useProfessionalsAll,
   useSaveProfessional,
@@ -23,6 +26,7 @@ import {
   useSetProfessionalServices,
   type ProfessionalFull,
 } from '@/lib/admin/hooks';
+import type { ProfessionalAccess } from '@/lib/admin/types';
 import { useBusiness } from '@/lib/admin/queries';
 
 const COLORS = [
@@ -489,69 +493,173 @@ function ServicesTab({ pro }: { pro: ProfessionalFull }) {
   );
 }
 
+type AreaKey = 'clients' | 'messages' | 'reports';
+
+const AREAS: { key: AreaKey; label: string; hint: string }[] = [
+  { key: 'clients', label: 'Todos los clientes', hint: 'Si no, solo ve a quienes ha atendido.' },
+  { key: 'messages', label: 'Mensajes', hint: 'Leer y responder el chat del negocio.' },
+  { key: 'reports', label: 'Reportes', hint: 'Ingresos y servicios más pedidos.' },
+];
+
 function AccessTab({ pro }: { pro: ProfessionalFull }) {
-  const create = useCreateAccount();
+  const invite = useInviteProfessional();
+  const resend = useResendInvitation();
+  const revoke = useRevokeAccess();
+  const saveAccess = useUpdateAccess();
   const toast = useToast();
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [access, setAccess] = useState<ProfessionalAccess>(pro.access);
   const [error, setError] = useState<string | null>(null);
+  useEffect(() => setAccess(pro.access), [pro.access]);
+
+  const dirty = JSON.stringify(access) !== JSON.stringify(pro.access);
+  const set = (patch: Partial<ProfessionalAccess>) => setAccess({ ...access, ...patch });
+
+  const permissions = (
+    <div className="space-y-4">
+      <div>
+        <p className="text-sm font-medium">Qué agenda ve</p>
+        <div
+          role="radiogroup"
+          aria-label="Qué agenda ve"
+          className="border-line mt-2 inline-flex rounded-xl border p-1"
+        >
+          {(
+            [
+              ['own', 'Solo la suya'],
+              ['all', 'La de todo el negocio'],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              role="radio"
+              aria-checked={access.agenda === value}
+              onClick={() => set({ agenda: value })}
+              className="text-stone aria-checked:bg-ink aria-checked:text-paper rounded-lg px-4 py-2 text-sm"
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {AREAS.map((a) => (
+        <div key={a.key}>
+          <Switch
+            label={a.label}
+            showLabel
+            checked={access[a.key]}
+            onChange={(v) => set({ [a.key]: v } as Partial<ProfessionalAccess>)}
+          />
+          <p className="text-stone mt-1 ml-13 text-sm">{a.hint}</p>
+        </div>
+      ))}
+
+      <p className="text-stone text-sm">
+        Siempre puede ver y atender sus propias citas y gestionar su horario. La configuración del
+        negocio y los pagos son solo tuyos.
+      </p>
+
+      {dirty && (
+        <Button
+          disabled={saveAccess.isPending}
+          onClick={() =>
+            saveAccess.mutate(
+              { id: pro.id, access },
+              {
+                onSuccess: () => toast('Permisos guardados'),
+                onError: (e) => toast(e.message, 'error'),
+              },
+            )
+          }
+        >
+          Guardar permisos
+        </Button>
+      )}
+    </div>
+  );
 
   if (pro.account) {
     return (
-      <div className="space-y-2">
-        <p>
-          {pro.name} entra al panel con <span className="font-medium">{pro.account.email}</span>.
-        </p>
-        <p className="text-stone text-sm">
-          Ve su agenda, sus clientes, puede cambiar el estado de sus citas y gestionar su horario.
-        </p>
+      <div className="space-y-6">
+        <div className="border-line rounded-xl border p-4">
+          <p>
+            {pro.name} entra al panel con <span className="font-medium">{pro.account.email}</span>.
+          </p>
+          <p className="text-stone mt-1 text-sm">
+            Si nunca creó su contraseña, vuelve a enviarle la invitación.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              variant="secondary"
+              disabled={resend.isPending}
+              onClick={() =>
+                resend.mutate(pro.id, {
+                  onSuccess: () => toast('Invitación reenviada'),
+                  onError: (e) => toast(e.message, 'error'),
+                })
+              }
+            >
+              Reenviar invitación
+            </Button>
+            <Button
+              variant="ghost"
+              disabled={revoke.isPending}
+              onClick={() => {
+                if (!confirm(`¿Quitarle el acceso al panel a ${pro.name}?`)) return;
+                revoke.mutate(pro.id, {
+                  onSuccess: () => toast('Acceso retirado'),
+                  onError: (e) => toast(e.message, 'error'),
+                });
+              }}
+            >
+              Quitar acceso
+            </Button>
+          </div>
+        </div>
+        {permissions}
       </div>
     );
   }
+
   return (
-    <div className="space-y-4">
-      <p className="text-stone text-sm">
-        Crea un usuario para que {pro.name} vea su agenda desde su teléfono. No podrá ver datos de
-        otros profesionales ni la configuración.
-      </p>
-      <Field label="Correo" htmlFor="a-email">
-        <TextInput
-          id="a-email"
-          type="email"
-          autoComplete="off"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-      </Field>
-      <Field
-        label="Contraseña inicial"
-        htmlFor="a-pass"
-        hint="Mínimo 8 caracteres. Compártela en persona."
-      >
-        <TextInput
-          id="a-pass"
-          type="password"
-          autoComplete="new-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-      </Field>
-      {error && (
-        <p role="alert" className="text-sm text-[#A5473F]">
-          {error}
+    <div className="space-y-6">
+      <div className="space-y-4">
+        <p className="text-stone text-sm">
+          Le enviamos un correo para que {pro.name} cree su propia contraseña y entre desde su
+          teléfono. Tú nunca ves esa contraseña.
         </p>
-      )}
-      <Button
-        disabled={create.isPending || !email || password.length < 8}
-        onClick={() =>
-          create.mutate(
-            { id: pro.id, email, password },
-            { onSuccess: () => toast('Usuario creado'), onError: (e) => setError(e.message) },
-          )
-        }
-      >
-        Crear usuario
-      </Button>
+        <Field label="Correo" htmlFor="a-email">
+          <TextInput
+            id="a-email"
+            type="email"
+            autoComplete="off"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </Field>
+        {error && (
+          <p role="alert" className="text-sm text-[#A5473F]">
+            {error}
+          </p>
+        )}
+        <Button
+          disabled={invite.isPending || !email}
+          onClick={() =>
+            invite.mutate(
+              { id: pro.id, email, access },
+              {
+                onSuccess: () => toast('Invitación enviada'),
+                onError: (e) => setError(e.message),
+              },
+            )
+          }
+        >
+          Enviar invitación
+        </Button>
+      </div>
+      {permissions}
     </div>
   );
 }

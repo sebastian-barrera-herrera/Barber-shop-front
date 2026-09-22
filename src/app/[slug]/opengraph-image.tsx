@@ -1,5 +1,5 @@
 import { ImageResponse } from 'next/og';
-import { publicApi, safely } from '@/lib/api';
+import { loadBusiness } from '@/lib/business-server';
 import { resolveTheme } from '@/lib/theme';
 
 export const alt = 'Reserva tu cita';
@@ -8,10 +8,12 @@ export const contentType = 'image/png';
 export const revalidate = 3600;
 
 /** Imagen al compartir el enlace (WhatsApp, Instagram, etc.): nombre y título sobre el papel de la marca. */
-export default async function OpenGraphImage() {
-  const business = await safely(publicApi.business);
-  const theme = resolveTheme(business?.branding);
-  const name = business?.name ?? 'Studio';
+export default async function OpenGraphImage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const r = await loadBusiness(slug);
+  const business = r.status === 'ok' ? r.business : null;
+  const theme = resolveTheme(business?.branding, business?.style);
+  const name = business?.name ?? 'Reservas';
   const title = business?.branding.heroTitle ?? 'Tu próximo look empieza aquí.';
 
   return new ImageResponse(
@@ -37,7 +39,7 @@ export default async function OpenGraphImage() {
         }}
       >
         <span>{name}</span>
-        <span>Reservas en línea</span>
+        <span>Reserva en línea</span>
       </div>
       <div style={{ fontSize: 96, lineHeight: 1, letterSpacing: -3, maxWidth: 950 }}>{title}</div>
       <div style={{ display: 'flex', height: 2, background: theme.ink }} />

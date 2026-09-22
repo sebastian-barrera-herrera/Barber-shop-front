@@ -1,3 +1,4 @@
+import { siteHref } from '@/lib/site-paths';
 import { ButtonLink, Arrow } from '@/components/ui/button';
 import { openStatus } from '@/lib/hours';
 import { resolveTheme } from '@/lib/theme';
@@ -33,7 +34,7 @@ export function Hero({
               {business.branding.heroSubtitle}
             </p>
             <div className="mt-9 flex flex-wrap gap-3">
-              <ButtonLink href="/reservar" size="lg">
+              <ButtonLink href={siteHref(business.slug, '/reservar')} size="lg">
                 Reservar cita <Arrow />
               </ButtonLink>
               <ButtonLink href="#carta" size="lg" variant="secondary">

@@ -1,4 +1,4 @@
-import type { BrandPreset, BusinessProfile } from './types';
+import type { BarberPreset, BrandPreset, BusinessProfile, BusinessStyle, SpaPreset } from './types';
 
 /**
  * Identidad visual por negocio. Cada preset define papel, tinta, piedra, línea y acento.
@@ -15,6 +15,11 @@ export interface ThemeTokens {
   scheme: 'light' | 'dark';
   /** Material del objeto 3D del hero */
   material: 'ceramic' | 'metal' | 'stone' | 'lacquer' | 'silk';
+  /**
+   * Cómo se componen los títulos:
+   * 'editorial' = serif con cursivas (spa) · 'signage' = condensada en mayúsculas, como un letrero (barbería).
+   */
+  face: 'editorial' | 'signage';
 }
 
 export const PRESETS: Record<BrandPreset, ThemeTokens> = {
@@ -28,6 +33,7 @@ export const PRESETS: Record<BrandPreset, ThemeTokens> = {
     brand: '#141412',
     scheme: 'light',
     material: 'ceramic',
+    face: 'editorial',
   },
   barber: {
     paper: '#141311',
@@ -39,6 +45,7 @@ export const PRESETS: Record<BrandPreset, ThemeTokens> = {
     brand: '#EDE6D8',
     scheme: 'dark',
     material: 'metal',
+    face: 'editorial',
   },
   spa: {
     paper: '#EEEBE3',
@@ -50,6 +57,7 @@ export const PRESETS: Record<BrandPreset, ThemeTokens> = {
     brand: '#1F2A24',
     scheme: 'light',
     material: 'stone',
+    face: 'editorial',
   },
   nails: {
     paper: '#F7F3EF',
@@ -61,6 +69,7 @@ export const PRESETS: Record<BrandPreset, ThemeTokens> = {
     brand: '#1A1416',
     scheme: 'light',
     material: 'lacquer',
+    face: 'editorial',
   },
   beauty: {
     paper: '#F5EFE9',
@@ -72,8 +81,53 @@ export const PRESETS: Record<BrandPreset, ThemeTokens> = {
     brand: '#1E1714',
     scheme: 'light',
     material: 'silk',
+    face: 'editorial',
+  }, // ── Estilo Barbería: carbón con textura de espiga, letrero clásico ──
+  clasico: {
+    paper: '#141414',
+    paper2: '#1F1E1D',
+    ink: '#F4F1EA',
+    stone: '#ACA69D',
+    line: '#343231',
+    accent: '#E2564F',
+    brand: '#B72F36',
+    scheme: 'dark',
+    material: 'metal',
+    face: 'signage',
+  },
+  ingles: {
+    paper: '#121816',
+    paper2: '#19211D',
+    ink: '#EDEAE1',
+    stone: '#A2A99E',
+    line: '#2C3833',
+    accent: '#CFAE6A',
+    brand: '#CFAE6A',
+    scheme: 'dark',
+    material: 'metal',
+    face: 'signage',
+  },
+  ebano: {
+    paper: '#111111',
+    paper2: '#1B1B1B',
+    ink: '#F2EEE6',
+    stone: '#A8A298',
+    line: '#2F2F2F',
+    accent: '#D4B36E',
+    brand: '#D4B36E',
+    scheme: 'dark',
+    material: 'metal',
+    face: 'signage',
   },
 };
+
+export const SPA_PRESETS: SpaPreset[] = ['studio', 'barber', 'spa', 'nails', 'beauty'];
+export const BARBER_PRESETS: BarberPreset[] = ['clasico', 'ingles', 'ebano'];
+
+/** Paletas que puede elegir cada estilo. */
+export function presetsFor(style: BusinessStyle): BrandPreset[] {
+  return style === 'BARBER' ? BARBER_PRESETS : SPA_PRESETS;
+}
 
 /** Valores por defecto del backend: si no cambiaron, manda el preset. */
 const DEFAULT_PRIMARY = '#141412';
@@ -92,8 +146,14 @@ export function contrastRatio(a: string, b: string): number {
   return (l1 + 0.05) / (l2 + 0.05);
 }
 
-export function resolveTheme(branding?: BusinessProfile['branding']): ThemeTokens {
-  const preset = PRESETS[branding?.preset ?? 'studio'] ?? PRESETS.studio;
+export function resolveTheme(
+  branding?: BusinessProfile['branding'],
+  style: BusinessStyle = 'SPA',
+): ThemeTokens {
+  // Una paleta de un estilo nunca se aplica al otro (p. ej. datos viejos): cae a la primera del estilo.
+  const allowed = presetsFor(style);
+  const key = branding?.preset && allowed.includes(branding.preset) ? branding.preset : allowed[0];
+  const preset = PRESETS[key];
   const valid = (c?: string) => (c && /^#[0-9a-f]{6}$/i.test(c) ? c : undefined);
   const primary = valid(branding?.primaryColor);
   const secondary = valid(branding?.secondaryColor);
@@ -114,6 +174,26 @@ export function resolveTheme(branding?: BusinessProfile['branding']): ThemeToken
   return { ...preset, brand, accent };
 }
 
+/** Cada cara tipográfica trae su caja, su peso y hasta sus esquinas. */
+const FACES = {
+  editorial: {
+    family: "var(--font-fraunces), 'Iowan Old Style', Georgia, serif",
+    case: 'none',
+    weight: '300',
+    tracking: '-0.02em',
+    radiusBtn: '9999px',
+    radiusCard: '24px',
+  },
+  signage: {
+    family: "var(--font-saira), 'Arial Narrow', ui-sans-serif, sans-serif",
+    case: 'uppercase',
+    weight: '700',
+    tracking: '0.01em',
+    radiusBtn: '6px',
+    radiusCard: '8px',
+  },
+} as const;
+
 /** Variables CSS que se inyectan en <html>. */
 export function themeStyle(t: ThemeTokens): Record<string, string> {
   const onBrand =
@@ -127,6 +207,25 @@ export function themeStyle(t: ThemeTokens): Record<string, string> {
     '--accent': t.accent,
     '--brand': t.brand,
     '--on-brand': onBrand,
+    '--display-face': FACES[t.face].family,
+    '--display-case': FACES[t.face].case,
+    '--display-weight': FACES[t.face].weight,
+    '--display-tracking': FACES[t.face].tracking,
+    '--radius-btn': FACES[t.face].radiusBtn,
+    '--radius-card': FACES[t.face].radiusCard,
     colorScheme: t.scheme,
   };
+}
+
+/** CSS para aplicar el tema a todo el documento (incluye portales como drawers y avisos). */
+export function themeCss(t: ThemeTokens): string {
+  const vars = Object.entries(themeStyle(t))
+    .map(([k, v]) => (k === 'colorScheme' ? `color-scheme:${v}` : `${k}:${v}`))
+    .join(';');
+  // La textura de espiga (tweed) solo existe en el estilo de letrero.
+  const texture =
+    t.face === 'signage'
+      ? `body{background-image:repeating-linear-gradient(45deg,color-mix(in srgb,var(--ink) 4%, transparent) 0 2px,transparent 2px 7px),repeating-linear-gradient(-45deg,color-mix(in srgb,var(--ink) 4%, transparent) 0 2px,transparent 2px 7px);background-size:14px 14px;background-attachment:fixed}`
+      : 'body{background-image:none}';
+  return `:root{${vars}}${texture}`;
 }

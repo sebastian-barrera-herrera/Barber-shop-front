@@ -1,9 +1,12 @@
 'use client';
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useState, type ReactNode } from 'react';
 import { Field, Select, TextInput } from '@/components/admin/form';
 import { ImageUpload } from '@/components/admin/image-upload';
 import { NoAccess, PageHeader, PageShell } from '@/components/admin/page-header';
+import { SitePreviewSection } from '@/components/admin/site-preview-section';
+import { SubscriptionSection } from '@/components/admin/subscription-section';
 import { Switch } from '@/components/admin/switch';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
@@ -16,21 +19,35 @@ import {
   type BusinessInfo,
   type Settings,
 } from '@/lib/admin/hooks';
-import { PRESETS, contrastRatio } from '@/lib/theme';
+import { PRESETS, contrastRatio, presetsFor } from '@/lib/theme';
 import type { BrandPreset, OpeningDay } from '@/lib/types';
 
-type Section = 'negocio' | 'horario' | 'redes' | 'apariencia' | 'reservas';
+type Section = 'negocio' | 'horario' | 'redes' | 'apariencia' | 'reservas' | 'web' | 'suscripcion';
 const SECTIONS: { key: Section; label: string }[] = [
   { key: 'negocio', label: 'Negocio' },
   { key: 'horario', label: 'Horario' },
   { key: 'redes', label: 'Redes' },
   { key: 'apariencia', label: 'Apariencia' },
   { key: 'reservas', label: 'Reservas' },
+  { key: 'web', label: 'Mi web' },
+  { key: 'suscripcion', label: 'Suscripción' },
 ];
 
 export default function ConfiguracionPage() {
+  return (
+    <Suspense fallback={<div className="bg-paper-2 m-6 h-64 animate-pulse rounded-2xl" />}>
+      <Configuracion />
+    </Suspense>
+  );
+}
+
+function Configuracion() {
   const { user } = useAuth();
-  const [section, setSection] = useState<Section>('negocio');
+  const params = useSearchParams();
+  const asked = params.get('seccion') as Section | null;
+  const [section, setSection] = useState<Section>(
+    asked && SECTIONS.some((s) => s.key === asked) ? asked : 'negocio',
+  );
   const settings = useSettings();
   const info = useBusinessInfo();
   if (user?.role !== 'OWNER') return <NoAccess />;
@@ -70,6 +87,12 @@ export default function ConfiguracionPage() {
             <BrandingSection value={settings.data.branding} info={info.data} />
           )}
           {section === 'reservas' && <BookingSection value={settings.data.booking} />}
+          {section === 'web' && <SitePreviewSection slug={info.data.slug} name={info.data.name} />}
+          {section === 'suscripcion' && (
+            <Suspense fallback={<div className="bg-paper-2 h-64 animate-pulse rounded-2xl" />}>
+              <SubscriptionSection />
+            </Suspense>
+          )}
         </div>
       )}
     </PageShell>
@@ -394,6 +417,9 @@ const PRESET_INFO: Record<BrandPreset, { label: string; for: string; material: s
   spa: { label: 'Spa', for: 'Arena y salvia', material: 'piedra' },
   nails: { label: 'Uñas', for: 'Hueso y cereza', material: 'laca' },
   beauty: { label: 'Belleza', for: 'Papel y terracota', material: 'seda' },
+  clasico: { label: 'Clásica', for: 'Carbón y rojo de barbería', material: 'acero' },
+  ingles: { label: 'Inglesa', for: 'Verde oscuro y latón', material: 'latón' },
+  ebano: { label: 'Ébano', for: 'Negro y dorado', material: 'ébano' },
 };
 
 function BrandingSection({ value, info }: { value: Settings['branding']; info: BusinessInfo }) {
@@ -411,14 +437,16 @@ function BrandingSection({ value, info }: { value: Settings['branding']; info: B
       <section className="mb-8">
         <h2 className="font-display text-2xl">Estilo</h2>
         <p className="text-stone mt-1 text-sm">
-          Colores, tipografía y el objeto 3D de la portada cambian con el estilo.
+          {info.style === 'BARBER'
+            ? 'Paletas del diseño de barbería: cambian los colores de tu página y de este panel.'
+            : 'Colores, tipografía y el objeto 3D de la portada cambian con el estilo.'}
         </p>
         <div
           role="radiogroup"
           aria-label="Estilo"
           className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3"
         >
-          {(Object.keys(PRESETS) as BrandPreset[]).map((k) => {
+          {presetsFor(info.style).map((k) => {
             const p = PRESETS[k];
             return (
               <button

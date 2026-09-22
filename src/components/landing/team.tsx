@@ -1,3 +1,4 @@
+import { siteHref } from '@/lib/site-paths';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Arrow } from '@/components/ui/button';
@@ -5,7 +6,13 @@ import { Reveal } from '@/components/ui/reveal';
 import type { PublicProfessional } from '@/lib/types';
 
 /** Retratos del equipo. Sin foto, la inicial en grande hace de retrato tipográfico. */
-export function Team({ professionals }: { professionals: PublicProfessional[] }) {
+export function Team({
+  professionals,
+  slug,
+}: {
+  professionals: PublicProfessional[];
+  slug: string;
+}) {
   return (
     <ul className="grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
       {professionals.map((p, i) => (
@@ -47,7 +54,7 @@ export function Team({ professionals }: { professionals: PublicProfessional[] })
                 {p.title && <p className="text-stone">{p.title}</p>}
               </div>
               <Link
-                href={`/reservar?con=${p.slug}`}
+                href={`${siteHref(slug, '/reservar')}?con=${p.slug}`}
                 className="mt-1 inline-flex shrink-0 items-center gap-1.5 text-sm underline-offset-4 hover:underline"
                 aria-label={`Reservar con ${p.name}`}
               >

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { publicApi } from '@/lib/api';
+import { useSite } from '@/lib/site';
 import { addDays, dateParts, formatHhmm, formatLongDate, todayIn } from '@/lib/format';
 import type { AvailabilityDay, Slot } from '@/lib/types';
 
@@ -25,6 +25,7 @@ export function StepTime({
   onDate: (date: string, replace?: boolean) => void;
   onSlot: (slot: Slot) => void;
 }) {
+  const { api } = useSite();
   const today = useMemo(() => todayIn(timezone), [timezone]);
   const lastDay = addDays(today, maxAdvanceDays);
   const [until, setUntil] = useState(() => addDays(today, PAGE - 1));
@@ -37,7 +38,7 @@ export function StepTime({
   useEffect(() => {
     let cancelled = false;
     setError(null);
-    publicApi
+    api
       .days({ serviceId, professionalId, from: today, to: until < lastDay ? until : lastDay })
       .then((d) => {
         if (cancelled) return;
@@ -60,7 +61,7 @@ export function StepTime({
     if (!date) return;
     let cancelled = false;
     setSlots(null);
-    publicApi
+    api
       .slots({ serviceId, professionalId, date })
       .then((r) => !cancelled && setSlots(r.slots))
       .catch((e: Error) => !cancelled && setError(e.message));

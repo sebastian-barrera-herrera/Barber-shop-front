@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { ChatThread } from '@/components/chat/chat-thread';
-import { publicApi } from '@/lib/api';
+import { useSite } from '@/lib/site';
 import type { PublicMessage } from '@/lib/types';
 
 /** Chat del cliente con el negocio, desde el enlace de su cita. Se actualiza cada 15 s. */
@@ -15,13 +15,14 @@ export function AppointmentChat({
   businessName: string;
   timezone: string;
 }) {
+  const { api } = useSite();
   const [messages, setMessages] = useState<PublicMessage[]>([]);
   const [sending, setSending] = useState(false);
   const [open, setOpen] = useState(false);
 
   const load = useCallback(async () => {
     try {
-      const r = await publicApi.messages(token);
+      const r = await api.messages(token);
       setMessages(r.messages);
       if (r.messages.length) setOpen(true);
     } catch {
@@ -40,7 +41,7 @@ export function AppointmentChat({
   const send = async (body: string) => {
     setSending(true);
     try {
-      const m = await publicApi.sendMessage(token, body);
+      const m = await api.sendMessage(token, body);
       setMessages((prev) => [...prev, m]);
     } finally {
       setSending(false);

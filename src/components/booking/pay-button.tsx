@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { publicApi } from '@/lib/api';
+import { useSite } from '@/lib/site';
 import { formatMoney } from '@/lib/format';
 
 /** Lleva al cliente a la pasarela (Wompi). El precio lo pone el servidor, no la página. */
@@ -17,6 +17,7 @@ export function PayButton({
   currency: string;
   required: boolean;
 }) {
+  const { api } = useSite();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,7 +25,7 @@ export function PayButton({
     setBusy(true);
     setError(null);
     try {
-      const { url } = await publicApi.startPayment(token);
+      const { url } = await api.startPayment(token);
       window.location.assign(url);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No pudimos iniciar el pago');

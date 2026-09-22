@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import { prettyPhone, whatsappLink } from '@/lib/format';
+import { siteHref } from '@/lib/site-paths';
 import type { BusinessProfile } from '@/lib/types';
+
+const PLATFORM = process.env.NEXT_PUBLIC_PLATFORM_NAME || 'FILO';
 
 const SOCIAL_LABEL: Record<string, string> = {
   instagram: 'Instagram',
@@ -12,6 +15,7 @@ const SOCIAL_LABEL: Record<string, string> = {
 export function Footer({ business }: { business: BusinessProfile }) {
   const socials = Object.entries(business.social).filter(([k, v]) => v && k in SOCIAL_LABEL);
   const whatsapp = business.whatsapp ?? business.social.whatsapp;
+  const to = (path: string) => siteHref(business.slug, path);
 
   return (
     <footer className="border-line mt-24 border-t">
@@ -30,22 +34,22 @@ export function Footer({ business }: { business: BusinessProfile }) {
           <p className="eyebrow mb-3">Visita</p>
           <ul className="space-y-2">
             <li>
-              <Link href="/servicios" className="hover:underline">
+              <Link href={to('/servicios')} className="hover:underline">
                 Servicios y precios
               </Link>
             </li>
             <li>
-              <Link href="/profesionales" className="hover:underline">
+              <Link href={to('/profesionales')} className="hover:underline">
                 Equipo
               </Link>
             </li>
             <li>
-              <Link href="/reservar" className="hover:underline">
+              <Link href={to('/reservar')} className="hover:underline">
                 Reservar cita
               </Link>
             </li>
             <li>
-              <Link href="/contacto" className="hover:underline">
+              <Link href={to('/contacto')} className="hover:underline">
                 Horario y ubicación
               </Link>
             </li>
@@ -84,8 +88,13 @@ export function Footer({ business }: { business: BusinessProfile }) {
           </ul>
         </div>
       </div>
-      <div className="border-line text-stone mx-auto max-w-6xl border-t px-4 py-5 text-sm sm:px-6">
-        © {new Date().getFullYear()} {business.name}
+      <div className="border-line text-stone mx-auto flex max-w-6xl flex-wrap justify-between gap-2 border-t px-4 py-5 text-sm sm:px-6">
+        <span>
+          © {new Date().getFullYear()} {business.name}
+        </span>
+        <Link href="/" className="hover:text-ink transition-colors">
+          Reservas con {PLATFORM}
+        </Link>
       </div>
     </footer>
   );

@@ -1,7 +1,14 @@
 /** Tipos de las respuestas públicas de la API (ver back: /api/docs). */
 
 export type BusinessType = 'BARBERSHOP' | 'SALON' | 'SPA' | 'NAILS' | 'AESTHETICS' | 'OTHER';
-export type BrandPreset = 'studio' | 'barber' | 'spa' | 'nails' | 'beauty';
+/** Paletas del estilo Spa. */
+export type SpaPreset = 'studio' | 'barber' | 'spa' | 'nails' | 'beauty';
+/** Paletas del estilo Barbería. */
+export type BarberPreset = 'clasico' | 'ingles' | 'ebano';
+export type BrandPreset = SpaPreset | BarberPreset;
+
+/** Estilo visual de todas las vistas del negocio; se elige al registrarse. */
+export type BusinessStyle = 'SPA' | 'BARBER';
 
 export interface OpeningDay {
   weekday: number;
@@ -14,6 +21,7 @@ export interface BusinessProfile {
   slug: string;
   name: string;
   type: BusinessType;
+  style: BusinessStyle;
   description: string | null;
   phone: string | null;
   email: string | null;

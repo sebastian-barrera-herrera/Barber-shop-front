@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button, buttonClass } from '@/components/ui/button';
-import { publicApi } from '@/lib/api';
+import { useSite } from '@/lib/site';
 import { formatLongDate, formatTime, whatsappLink } from '@/lib/format';
 import { buildIcs, downloadIcs } from '@/lib/ics';
 import type { BusinessProfile, PublicAppointment } from '@/lib/types';
@@ -18,6 +18,7 @@ export function AppointmentActions({
   business: BusinessProfile;
   token: string;
 }) {
+  const { api, href } = useSite();
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -36,13 +37,13 @@ export function AppointmentActions({
         start: a.startsAt,
         end: a.endsAt,
         location: [business.address, business.city].filter(Boolean).join(', ') || undefined,
-        description: `Con ${a.professional.name}. Ver o cancelar: ${window.location.origin}/cita/${token}`,
+        description: `Con ${a.professional.name}. Ver o cancelar: ${window.location.origin}${href(`/cita/${token}`)}`,
       }),
     );
 
   const copyLink = async () => {
     try {
-      await navigator.clipboard.writeText(`${window.location.origin}/cita/${token}`);
+      await navigator.clipboard.writeText(`${window.location.origin}${href(`/cita/${token}`)}`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -54,8 +55,8 @@ export function AppointmentActions({
     setBusy(true);
     setError(null);
     try {
-      await publicApi.cancel(token);
-      router.replace(`/cita/${token}`);
+      await api.cancel(token);
+      router.replace(href(`/cita/${token}`));
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No pudimos cancelar. Intenta de nuevo');

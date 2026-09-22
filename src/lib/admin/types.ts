@@ -2,6 +2,14 @@ import type { AppointmentStatus, BusinessProfile } from '../types';
 
 export type Role = 'OWNER' | 'ADMIN' | 'PROFESSIONAL';
 
+/** Qué ve un profesional en el panel; lo define el dueño. */
+export interface ProfessionalAccess {
+  agenda: 'own' | 'all';
+  clients: boolean;
+  messages: boolean;
+  reports: boolean;
+}
+
 export interface SessionUser {
   id: string;
   name: string;
@@ -9,6 +17,7 @@ export interface SessionUser {
   role: Role;
   businessId: string;
   professionalId: string | null;
+  access: ProfessionalAccess | null;
 }
 
 export interface Page<T> {
@@ -49,6 +58,8 @@ export interface AdminBusiness {
   id: string;
   slug: string;
   name: string;
+  /** Estilo visual del negocio: también viste este panel. */
+  style: BusinessProfile['style'];
   timezone: string;
   currency: string;
   country: string;
