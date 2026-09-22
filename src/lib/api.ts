@@ -2,6 +2,7 @@ import type {
   AvailabilityDay,
   BookingPayload,
   BusinessProfile,
+  BusinessStyle,
   CatalogGroup,
   DaySlots,
   PublicAppointment,
@@ -18,8 +19,6 @@ const BASE_URL =
   (typeof window === 'undefined' ? process.env.API_URL : undefined) ||
   process.env.NEXT_PUBLIC_API_URL ||
   'http://localhost:4000/api/v1';
-
-export const BUSINESS_SLUG = process.env.NEXT_PUBLIC_BUSINESS_SLUG || 'studio-demo';
 
 export class ApiError extends Error {
   constructor(
@@ -66,51 +65,61 @@ async function request<T>(
   return (res.status === 204 ? undefined : await res.json()) as T;
 }
 
-const pub = (path: string) => `/public/${BUSINESS_SLUG}${path}`;
-
-/** Endpoints públicos (sin sesión). */
-export const publicApi = {
-  business: () => request<BusinessProfile>(pub('/business'), { revalidate: 60 }),
-  catalog: () => request<CatalogGroup[]>(pub('/catalog'), { revalidate: 60 }),
-  service: (slug: string) =>
-    request<PublicService & { professionals: PublicProfessional[] }>(pub(`/services/${slug}`)),
-  professionals: (serviceId?: string, revalidate?: number) =>
-    request<PublicProfessional[]>(pub('/professionals'), { query: { serviceId }, revalidate }),
-  days: (q: { serviceId: string; professionalId?: string; from: string; to: string }) =>
-    request<AvailabilityDay[]>(pub('/availability/days'), { query: q }),
-  slots: (q: { serviceId: string; professionalId?: string; date: string }) =>
-    request<DaySlots>(pub('/availability'), { query: q }),
-  book: (payload: BookingPayload) =>
-    request<{ appointment: PublicAppointment; manageToken: string }>(pub('/appointments'), {
-      method: 'POST',
-      body: payload,
-    }),
-  appointment: (token: string) =>
-    request<PublicAppointment>(pub(`/appointments/by-token/${encodeURIComponent(token)}`)),
-  messages: (token: string) =>
-    request<{ messages: PublicMessage[] }>(
-      pub(`/appointments/by-token/${encodeURIComponent(token)}/messages`),
-    ),
-  sendMessage: (token: string, body: string) =>
-    request<PublicMessage>(pub(`/appointments/by-token/${encodeURIComponent(token)}/messages`), {
-      method: 'POST',
-      body: { body },
-    }),
-  startPayment: (token: string) =>
-    request<{ url: string }>(pub(`/appointments/by-token/${encodeURIComponent(token)}/payments`), {
-      method: 'POST',
-    }),
-  verifyPayment: (token: string, transactionId: string) =>
-    request<{ status: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED' }>(
-      pub(`/appointments/by-token/${encodeURIComponent(token)}/payments/verify`),
-      { method: 'POST', body: { transactionId } },
-    ),
-  cancel: (token: string, reason?: string) =>
-    request<PublicAppointment>(pub(`/appointments/by-token/${encodeURIComponent(token)}/cancel`), {
-      method: 'POST',
-      body: { reason },
-    }),
-};
+/**
+ * Endpoints públicos (sin sesión) de un negocio: `publicApi('barberia-demo').catalog()`.
+ * Cada empresa vive en su propia dirección (filo.com/<slug>).
+ */
+export function publicApi(slug: string) {
+  const pub = (path: string) => `/public/${encodeURIComponent(slug)}${path}`;
+  return {
+    business: () => request<BusinessProfile>(pub('/business'), { revalidate: 60 }),
+    catalog: () => request<CatalogGroup[]>(pub('/catalog'), { revalidate: 60 }),
+    service: (slug: string) =>
+      request<PublicService & { professionals: PublicProfessional[] }>(pub(`/services/${slug}`)),
+    professionals: (serviceId?: string, revalidate?: number) =>
+      request<PublicProfessional[]>(pub('/professionals'), { query: { serviceId }, revalidate }),
+    days: (q: { serviceId: string; professionalId?: string; from: string; to: string }) =>
+      request<AvailabilityDay[]>(pub('/availability/days'), { query: q }),
+    slots: (q: { serviceId: string; professionalId?: string; date: string }) =>
+      request<DaySlots>(pub('/availability'), { query: q }),
+    book: (payload: BookingPayload) =>
+      request<{ appointment: PublicAppointment; manageToken: string }>(pub('/appointments'), {
+        method: 'POST',
+        body: payload,
+      }),
+    appointment: (token: string) =>
+      request<PublicAppointment>(pub(`/appointments/by-token/${encodeURIComponent(token)}`)),
+    messages: (token: string) =>
+      request<{ messages: PublicMessage[] }>(
+        pub(`/appointments/by-token/${encodeURIComponent(token)}/messages`),
+      ),
+    sendMessage: (token: string, body: string) =>
+      request<PublicMessage>(pub(`/appointments/by-token/${encodeURIComponent(token)}/messages`), {
+        method: 'POST',
+        body: { body },
+      }),
+    startPayment: (token: string) =>
+      request<{ url: string }>(
+        pub(`/appointments/by-token/${encodeURIComponent(token)}/payments`),
+        {
+          method: 'POST',
+        },
+      ),
+    verifyPayment: (token: string, transactionId: string) =>
+      request<{ status: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED' }>(
+        pub(`/appointments/by-token/${encodeURIComponent(token)}/payments/verify`),
+        { method: 'POST', body: { transactionId } },
+      ),
+    cancel: (token: string, reason?: string) =>
+      request<PublicAppointment>(
+        pub(`/appointments/by-token/${encodeURIComponent(token)}/cancel`),
+        {
+          method: 'POST',
+          body: { reason },
+        },
+      ),
+  };
+}
 
 /** Para páginas del servidor: si la API no responde, devuelve null en vez de romper la página. */
 export async function safely<T>(fn: () => Promise<T>): Promise<T | null> {
@@ -120,3 +129,31 @@ export async function safely<T>(fn: () => Promise<T>): Promise<T | null> {
     return null;
   }
 }
+
+export interface SlugCheck {
+  slug: string;
+  available: boolean;
+  reason: string | null;
+  suggestion: string;
+}
+
+export interface RegisterPayload {
+  businessName: string;
+  slug: string;
+  style: BusinessStyle;
+  ownerName: string;
+  email: string;
+  password: string;
+  phone?: string;
+  city?: string;
+}
+
+/** Endpoints de la plataforma (FILO). El registro abre sesión, así que vive en lib/admin/client.ts. */
+export const platformApi = {
+  checkSlug: (q: { slug?: string; name?: string }) =>
+    request<SlugCheck>('/platform/slug', { query: q }),
+  forgotPassword: (email: string) =>
+    request<void>('/auth/forgot-password', { method: 'POST', body: { email } }),
+  resetPassword: (token: string, password: string) =>
+    request<void>('/auth/reset-password', { method: 'POST', body: { token, password } }),
+};

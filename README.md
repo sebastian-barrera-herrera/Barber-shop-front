@@ -1,16 +1,24 @@
-# Studio Booking — Web
+# FILO — Web
 
-Web pública y panel administrativo de la plataforma de reservas para barberías, salones de belleza, spa y
-estudios de uñas. **Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · TanStack Query · Motion · Three.js.**
+Plataforma de reservas **multiempresa**: cada barbería, spa, salón o estudio de uñas se registra, recibe su
+propia página en `filo.com/<su-nombre>` y su panel. **Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · TanStack Query · Motion · Three.js.**
 
 - API: [barber-shop-back](https://github.com/sebastian-barrera-herrera/barber-shop-back) (incluye guías de Wompi y despliegue)
 - Arquitectura y decisiones: [docs/PLAN_TECNICO.md](docs/PLAN_TECNICO.md)
 
 ## Qué incluye
 
-**Web pública**
-- Landing con hero editorial, objeto 3D por tipo de negocio, carta de servicios con precios, equipo, horario
-  con "abierto ahora", ubicación y botón de WhatsApp.
+**Plataforma** (`/`)
+- Portada de FILO con **interruptor Spa / Barbería**: quien va a registrarse ve la plataforma con el diseño
+  que le tocará, y ese modo llega preseleccionado al registro.
+- Registro libre en `/registro` (la dirección se propone y se comprueba mientras escribes), entrada en
+  `/entrar` y recuperación de contraseña en `/recuperar` y `/restablecer`.
+
+**Página de cada empresa** (`/<slug>`)
+- Dos diseños según el tipo de comercio, elegido al crear la cuenta:
+  - **Spa**: "la libreta del salón", papel y tinta, objeto 3D en la portada.
+  - **Barbería**: letrero de vitrina sobre carbón con textura de espiga, escudo y tipografía condensada.
+- Landing con carta de servicios con precios, equipo, horario con "abierto ahora", ubicación y WhatsApp.
 - Reserva en 4 pantallas: servicio → profesional ("me da igual") → fecha y hora → tus datos. Sin cuenta.
 - "Mi cita" (enlace privado): agregar al calendario, cancelar dentro del plazo, chatear con el negocio y pagar en línea.
 
@@ -18,7 +26,11 @@ estudios de uñas. **Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · T
 - **Hoy**: resumen, agenda con acciones de un toque, ingresos de la semana, servicios populares.
 - **Calendario** día / semana / mes (arrastra una cita para moverla de hora o de profesional; Esc cancela) · **Citas** con filtros · **Clientes** con ficha e historial.
 - **Mensajes** · **Servicios** · **Profesionales** (servicios, horario, días libres, acceso) · **Mi horario**.
-- **Pagos** (conectar Wompi) · **Reportes** · **Configuración** (negocio, horario, redes, apariencia, reservas).
+- **Pagos** (conectar Wompi) · **Reportes** · **Configuración** (negocio, horario, redes, apariencia,
+  reservas, **Mi web** con vista previa y enlace para compartir, y **Suscripción** con los días
+  restantes y el pago del plan).
+- **Profesionales → Acceso**: se les invita por correo (cada uno crea su contraseña) y se define qué ven:
+  su agenda o la de todos, clientes, mensajes y reportes. El menú se arma con esos permisos.
 - Buscador global (atajo `/`), avisos de nuevas reservas, mensajes y pagos. Todo se actualiza solo.
 
 ## 1. Requisitos
@@ -42,7 +54,7 @@ npm run dev          # http://localhost:3000   ·   panel: http://localhost:3000
 |---|---|
 | `NEXT_PUBLIC_API_URL` | URL pública de la API (la usa el navegador) |
 | `API_URL` | Opcional: URL de la API desde el servidor de Next (en Docker, `http://api:4000/api/v1`) |
-| `NEXT_PUBLIC_BUSINESS_SLUG` | Qué negocio muestra esta web (`studio-demo` con los datos de prueba) |
+| `NEXT_PUBLIC_PLATFORM_NAME` | Marca de la plataforma (por defecto `FILO`) |
 | `NEXT_PUBLIC_SITE_URL` | Dominio público (canonical, sitemap, Open Graph) |
 
 Las variables `NEXT_PUBLIC_*` quedan fijas al compilar.
@@ -51,10 +63,11 @@ Las variables `NEXT_PUBLIC_*` quedan fijas al compilar.
 
 | Ruta | Página |
 |---|---|
-| `/` · `/servicios` · `/profesionales` · `/contacto` | Web pública |
-| `/reservar` | Reserva (`?servicio=&con=&fecha=&hora=`, el botón "atrás" funciona) |
-| `/cita/[token]` | Ver, cancelar, chatear y pagar (privada, no indexada) |
-| `/admin/login` | Entrada al panel |
+| `/` | Portada de la plataforma, con el interruptor Spa / Barbería |
+| `/registro` · `/entrar` · `/recuperar` · `/restablecer` | Cuenta del negocio |
+| `/<slug>` · `/<slug>/servicios` · `/<slug>/profesionales` · `/<slug>/contacto` | Página pública de una empresa |
+| `/<slug>/reservar` | Reserva (`?servicio=&con=&fecha=&hora=`, el botón "atrás" funciona) |
+| `/<slug>/cita/[token]` | Ver, cancelar, chatear y pagar (privada, no indexada) |
 | `/admin`, `/admin/calendario`, `/admin/citas`, `/admin/clientes`, `/admin/mensajes`, `/admin/servicios`, `/admin/profesionales`, `/admin/mi-horario`, `/admin/pagos`, `/admin/reportes`, `/admin/configuracion` | Panel (según rol) |
 
 ## 5. Diseño

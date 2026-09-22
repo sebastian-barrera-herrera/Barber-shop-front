@@ -2,19 +2,20 @@ import type { Metadata } from 'next';
 import { ServiceMenu } from '@/components/landing/service-menu';
 import { Unavailable } from '@/components/landing/unavailable';
 import { publicApi, safely } from '@/lib/api';
+import { requireBusiness } from '@/lib/business-server';
 
 export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: 'Servicios y precios',
   description: 'Carta completa de servicios con precio y duración. Reserva en línea en un minuto.',
-  alternates: { canonical: '/servicios' },
 };
 
-export default async function ServicesPage() {
+export default async function ServicesPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   const [business, catalog] = await Promise.all([
-    safely(publicApi.business),
-    safely(publicApi.catalog),
+    requireBusiness(slug),
+    safely(publicApi(slug).catalog),
   ]);
   if (!business) return <Unavailable />;
 
@@ -28,7 +29,7 @@ export default async function ServicesPage() {
         Precios finales. Toca un servicio para reservarlo.
       </p>
       <div className="mt-14">
-        <ServiceMenu groups={catalog ?? []} currency={business.currency} />
+        <ServiceMenu groups={catalog ?? []} currency={business.currency} slug={slug} />
       </div>
     </div>
   );

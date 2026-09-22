@@ -4,6 +4,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import type { AppointmentStatus, BusinessProfile } from '../types';
 import { adminFetch } from './client';
 import type {
+  ProfessionalAccess,
   AdminAppointment,
   AdminBusiness,
   AdminProfessional,
@@ -35,6 +36,7 @@ export interface ProfessionalFull extends AdminProfessional {
   bio: string | null;
   specialties: string[];
   social: Record<string, string> | null;
+  access: ProfessionalAccess;
   account: { email: string; isActive: boolean } | null;
 }
 
@@ -165,8 +167,11 @@ export interface Settings {
 
 export interface BusinessInfo {
   id: string;
+  slug: string;
   name: string;
   type: BusinessProfile['type'];
+  /** Estilo visual de todo el negocio (se elige al registrarse). */
+  style: BusinessProfile['style'];
   description: string | null;
   phone: string | null;
   email: string | null;
@@ -352,11 +357,88 @@ export function useSetWorkingHours() {
   });
 }
 
-export function useCreateAccount() {
+/** Invita al profesional: recibe un correo y elige su propia contraseña. */
+export function useInviteProfessional() {
   const invalidate = useInvalidate(['professionals']);
   return useMutation({
-    mutationFn: ({ id, email, password }: { id: string; email: string; password: string }) =>
-      adminFetch(`/professionals/${id}/account`, json('POST', { email, password })),
+    mutationFn: ({
+      id,
+      email,
+      access,
+    }: {
+      id: string;
+      email: string;
+      access?: Partial<ProfessionalAccess>;
+    }) => adminFetch(`/professionals/${id}/invite`, json('POST', { email, access })),
+    onSuccess: invalidate,
+  });
+}
+
+export function useResendInvitation() {
+  const invalidate = useInvalidate(['professionals']);
+  return useMutation({
+    mutationFn: (id: string) => adminFetch(`/professionals/${id}/invite/resend`, json('POST', {})),
+    onSuccess: invalidate,
+  });
+}
+
+export function useRevokeAccess() {
+  const invalidate = useInvalidate(['professionals']);
+  return useMutation({
+    mutationFn: (id: string) => adminFetch(`/professionals/${id}/access`, { method: 'DELETE' }),
+    onSuccess: invalidate,
+  });
+}
+
+export function useUpdateAccess() {
+  const invalidate = useInvalidate(['professionals']);
+  return useMutation({
+    mutationFn: ({ id, access }: { id: string; access: ProfessionalAccess }) =>
+      adminFetch(`/professionals/${id}/access`, json('PATCH', { access })),
+    onSuccess: invalidate,
+  });
+}
+
+// ───────────── Suscripción con la plataforma ─────────────
+
+export interface Subscription {
+  subscriptionStatus: 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELLED';
+  subscriptionPlan: 'MONTHLY' | 'YEARLY' | null;
+  trialEndsAt: string | null;
+  currentPeriodEnd: string | null;
+  daysLeft: number;
+  prices: { MONTHLY: number; YEARLY: number };
+  canPayOnline: boolean;
+  payments: {
+    id: string;
+    plan: 'MONTHLY' | 'YEARLY';
+    amountCents: number;
+    currency: string;
+    paidAt: string | null;
+  }[];
+}
+
+export function useSubscription(enabled = true) {
+  return useQuery({
+    queryKey: ['subscription'],
+    queryFn: () => adminFetch<Subscription>('/subscription'),
+    enabled,
+    staleTime: 60_000,
+  });
+}
+
+export function useSubscriptionCheckout() {
+  return useMutation({
+    mutationFn: (plan: 'MONTHLY' | 'YEARLY') =>
+      adminFetch<{ url: string }>('/subscription/checkout', json('POST', { plan })),
+  });
+}
+
+export function useVerifySubscription() {
+  const invalidate = useInvalidate(['subscription']);
+  return useMutation({
+    mutationFn: (transactionId: string) =>
+      adminFetch<Subscription>('/subscription/verify', json('POST', { transactionId })),
     onSuccess: invalidate,
   });
 }

@@ -3,7 +3,8 @@
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ApiError, publicApi } from '@/lib/api';
+import { ApiError } from '@/lib/api';
+import { useSite } from '@/lib/site';
 import { formatDuration, formatLongDate, formatMoney, formatTime } from '@/lib/format';
 import type {
   BusinessProfile,
@@ -39,6 +40,7 @@ export function BookingFlow({
   catalog: CatalogGroup[];
   team: PublicProfessional[];
 }) {
+  const { api, href } = useSite();
   const params = useSearchParams();
   const router = useRouter();
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -126,7 +128,7 @@ export function BookingFlow({
     setSubmitting(true);
     setError(null);
     try {
-      const { manageToken } = await publicApi.book({
+      const { manageToken } = await api.book({
         serviceId: service.id,
         professionalId: professional && proParam !== ANY ? professional.id : null,
         startsAt,
@@ -137,7 +139,7 @@ export function BookingFlow({
         },
         notes: details.notes.trim() || undefined,
       });
-      router.push(`/cita/${manageToken}?nueva=1`);
+      router.push(`${href(`/cita/${manageToken}`)}?nueva=1`);
     } catch (e) {
       const message = e instanceof Error ? e.message : 'No pudimos reservar. Intenta de nuevo';
       // La hora se ocupó mientras llenaba el formulario: volver a elegir hora con aviso.

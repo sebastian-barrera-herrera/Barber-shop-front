@@ -1,3 +1,4 @@
+import { siteHref } from '@/lib/site-paths';
 import Link from 'next/link';
 import { Reveal } from '@/components/ui/reveal';
 import { formatDuration, formatMoney } from '@/lib/format';
@@ -7,7 +8,15 @@ import type { CatalogGroup } from '@/lib/types';
  * La carta: precios como en la pared del local — nombre, puntos y precio.
  * Cada fila lleva directo a reservar ese servicio.
  */
-export function ServiceMenu({ groups, currency }: { groups: CatalogGroup[]; currency: string }) {
+export function ServiceMenu({
+  groups,
+  currency,
+  slug,
+}: {
+  groups: CatalogGroup[];
+  currency: string;
+  slug: string;
+}) {
   if (!groups.length) {
     return <p className="text-stone">Pronto publicaremos nuestros servicios.</p>;
   }
@@ -32,7 +41,7 @@ export function ServiceMenu({ groups, currency }: { groups: CatalogGroup[]; curr
               {group.services.map((s) => (
                 <li key={s.id} className="border-line border-b last:border-b-0">
                   <Link
-                    href={`/reservar?servicio=${s.slug}`}
+                    href={`${siteHref(slug, '/reservar')}?servicio=${s.slug}`}
                     className="group block py-4 outline-offset-0"
                     aria-label={`Reservar ${s.name}, ${formatMoney(s.priceCents, currency)}, ${formatDuration(s.durationMinutes)}`}
                   >

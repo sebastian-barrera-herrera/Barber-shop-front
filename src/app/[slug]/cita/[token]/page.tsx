@@ -8,6 +8,8 @@ import { Unavailable } from '@/components/landing/unavailable';
 import { ButtonLink } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ApiError, publicApi, safely } from '@/lib/api';
+import { requireBusiness } from '@/lib/business-server';
+import { siteHref } from '@/lib/site-paths';
 import { formatDuration, formatLongDate, formatMoney, formatTime } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
@@ -21,23 +23,26 @@ export default async function AppointmentPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ token: string }>;
+  params: Promise<{ slug: string; token: string }>;
   searchParams: Promise<{ nueva?: string; pago?: string; id?: string }>;
 }) {
-  const [{ token }, { nueva, pago, id: transactionId }] = await Promise.all([params, searchParams]);
-  const business = await safely(publicApi.business);
+  const [{ slug, token }, { nueva, pago, id: transactionId }] = await Promise.all([
+    params,
+    searchParams,
+  ]);
+  const api = publicApi(slug);
+  const business = await requireBusiness(slug);
   if (!business) return <Unavailable />;
 
   // Al volver de la pasarela: el servidor confirma el estado real con Wompi.
   let paymentResult: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED' | null = null;
   if (pago === '1' && transactionId && /^[\w-]{1,64}$/.test(transactionId)) {
-    paymentResult =
-      (await safely(() => publicApi.verifyPayment(token, transactionId)))?.status ?? null;
+    paymentResult = (await safely(() => api.verifyPayment(token, transactionId)))?.status ?? null;
   }
 
   let appointment;
   try {
-    appointment = await publicApi.appointment(token);
+    appointment = await api.appointment(token);
   } catch (e) {
     if (e instanceof ApiError && e.status === 404) notFound();
     return <Unavailable />;
@@ -98,7 +103,7 @@ export default async function AppointmentPage({
         )}
         <div className="mt-10">
           {a.status === 'CANCELLED' ? (
-            <ButtonLink href="/reservar" size="lg">
+            <ButtonLink href={siteHref(slug, '/reservar')} size="lg">
               Reservar otra cita
             </ButtonLink>
           ) : (

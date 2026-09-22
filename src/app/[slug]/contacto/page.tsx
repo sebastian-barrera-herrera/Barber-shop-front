@@ -1,18 +1,17 @@
 import type { Metadata } from 'next';
 import { Unavailable } from '@/components/landing/unavailable';
 import { Visit } from '@/components/landing/visit';
-import { publicApi, safely } from '@/lib/api';
+import { requireBusiness } from '@/lib/business-server';
 
 export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: 'Horario y ubicación',
   description: 'Dirección, horario de atención y formas de contacto.',
-  alternates: { canonical: '/contacto' },
 };
 
-export default async function ContactPage() {
-  const business = await safely(publicApi.business);
+export default async function ContactPage({ params }: { params: Promise<{ slug: string }> }) {
+  const business = await requireBusiness((await params).slug);
   if (!business) return <Unavailable />;
 
   return (

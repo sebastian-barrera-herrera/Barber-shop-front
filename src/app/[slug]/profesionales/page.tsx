@@ -7,11 +7,11 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: 'Equipo',
   description: 'Conoce a nuestros profesionales y reserva con quien prefieras.',
-  alternates: { canonical: '/profesionales' },
 };
 
-export default async function TeamPage() {
-  const team = (await safely(() => publicApi.professionals(undefined, 60))) ?? [];
+export default async function TeamPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const team = (await safely(() => publicApi(slug).professionals(undefined, 60))) ?? [];
 
   return (
     <div className="mx-auto max-w-6xl px-4 pt-12 sm:px-6 md:pt-20">
@@ -24,7 +24,7 @@ export default async function TeamPage() {
       </p>
       <div className="mt-14">
         {team.length ? (
-          <Team professionals={team} />
+          <Team professionals={team} slug={slug} />
         ) : (
           <p className="text-stone">Muy pronto presentaremos al equipo.</p>
         )}
