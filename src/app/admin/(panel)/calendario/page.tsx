@@ -12,9 +12,16 @@ import {
 } from '@/components/admin/new-appointment-drawer';
 import { Button } from '@/components/ui/button';
 import { STATUS } from '@/components/ui/status-badge';
+import { useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/components/ui/toast';
 import { useAuth } from '@/lib/admin/auth';
-import { useAppointments, useBusiness, useProfessionals } from '@/lib/admin/queries';
-import type { AdminBusiness, AdminProfessional } from '@/lib/admin/types';
+import {
+  useAppointments,
+  useBusiness,
+  useProfessionals,
+  useUpdateAppointment,
+} from '@/lib/admin/queries';
+import type { AdminAppointment, AdminBusiness, AdminProfessional } from '@/lib/admin/types';
 import {
   localDate,
   monthGrid,
@@ -59,6 +66,9 @@ function CalendarInner() {
   const params = useSearchParams();
   const router = useRouter();
   const { user, canManage } = useAuth();
+  const update = useUpdateAppointment();
+  const qc = useQueryClient();
+  const toast = useToast();
   const business = useBusiness();
   const professionals = useProfessionals();
   const tz = business.data?.timezone ?? 'America/Bogota';
@@ -118,6 +128,39 @@ function CalendarInner() {
       : view === 'semana'
         ? `${fmt(startOfWeek(date), { day: 'numeric', month: 'short' })} – ${fmt(shiftDays(startOfWeek(date), 6), { day: 'numeric', month: 'short' })}`
         : fmt(date, { month: 'long', year: 'numeric' });
+
+  /** Soltar una cita arrastrada: la API valida horario y cruces; fuera del horario se pregunta. */
+  const moveAppointment = async (a: AdminAppointment, col: GridColumn, minute: number) => {
+    const professionalId = col.professionalId ?? a.professional.id;
+    const startsAt = zonedToUtc(col.date, minute, tz).toISOString();
+    const pro =
+      (professionals.data ?? []).find((p) => p.id === professionalId)?.name ?? a.professional.name;
+    const label = `${fmt(col.date, { weekday: 'short', day: 'numeric' })} · ${new Intl.DateTimeFormat('es-CO', { timeZone: tz, hour: 'numeric', minute: '2-digit' }).format(new Date(startsAt))}`;
+    const send = async (allowOutsideHours?: boolean) => {
+      await update.mutateAsync({ id: a.id, startsAt, professionalId, allowOutsideHours });
+      // Esperar la agenda actualizada para que la cita no "salte" a su lugar anterior.
+      await qc.invalidateQueries({ queryKey: ['appointments'] });
+      toast(
+        `${a.customer.name}: movida a ${label}${professionalId !== a.professional.id ? ` con ${pro}` : ''}`,
+      );
+    };
+    try {
+      await send();
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'No se pudo mover la cita';
+      if (/fuera del horario/i.test(message) && window.confirm(`${message}. ¿Moverla igual?`)) {
+        try {
+          await send(true);
+          return;
+        } catch (e2) {
+          toast(e2 instanceof Error ? e2.message : message, 'error');
+          throw e2;
+        }
+      }
+      toast(message, 'error');
+      throw e;
+    }
+  };
 
   if (!business.data || !professionals.data) {
     return <div className="bg-paper-2 h-[60vh] animate-pulse rounded-2xl" />;
@@ -281,6 +324,9 @@ function CalendarInner() {
             onSlotClick={(col, minute) =>
               setPrefill({ date: col.date, minute, professionalId: col.professionalId })
             }
+            stepMinutes={business.data.settings.booking.slotStepMinutes}
+            canDrag={(a) => canManage && (a.status === 'PENDING' || a.status === 'CONFIRMED')}
+            onMove={moveAppointment}
           />
         )}
       </div>

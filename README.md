@@ -16,7 +16,7 @@ estudios de uñas. **Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · T
 
 **Panel** (`/admin`)
 - **Hoy**: resumen, agenda con acciones de un toque, ingresos de la semana, servicios populares.
-- **Calendario** día / semana / mes · **Citas** con filtros · **Clientes** con ficha e historial.
+- **Calendario** día / semana / mes (arrastra una cita para moverla de hora o de profesional; Esc cancela) · **Citas** con filtros · **Clientes** con ficha e historial.
 - **Mensajes** · **Servicios** · **Profesionales** (servicios, horario, días libres, acceso) · **Mi horario**.
 - **Pagos** (conectar Wompi) · **Reportes** · **Configuración** (negocio, horario, redes, apariencia, reservas).
 - Buscador global (atajo `/`), avisos de nuevas reservas, mensajes y pagos. Todo se actualiza solo.
