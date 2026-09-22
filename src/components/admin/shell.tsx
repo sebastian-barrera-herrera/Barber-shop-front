@@ -95,8 +95,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const [more, setMore] = useState(false);
 
   useEffect(() => {
-    if (status === 'anonymous')
-      router.replace(`/admin/login?volver=${encodeURIComponent(pathname)}`);
+    if (status === 'anonymous') router.replace(`/entrar?volver=${encodeURIComponent(pathname)}`);
   }, [status, router, pathname]);
   useEffect(() => setMore(false), [pathname]);
 

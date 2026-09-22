@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ButtonLink } from '@/components/ui/button';
+import { useSite } from '@/lib/site';
+import type { BusinessProfile } from '@/lib/types';
 
 const LINKS = [
   { href: '/servicios', label: 'Servicios' },
@@ -11,8 +13,11 @@ const LINKS = [
   { href: '/contacto', label: 'Contacto' },
 ];
 
-export function Navbar({ name }: { name: string }) {
+export function Navbar({ business }: { business: BusinessProfile }) {
   const pathname = usePathname();
+  const { href } = useSite();
+  const name = business.name;
+  const booking = pathname === href('/reservar');
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -34,7 +39,7 @@ export function Navbar({ name }: { name: string }) {
         aria-label="Principal"
         className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6"
       >
-        <Link href="/" className="font-display text-xl tracking-[0.02em]">
+        <Link href={href()} className="font-display text-xl tracking-[0.02em]">
           {name}
         </Link>
 
@@ -42,23 +47,23 @@ export function Navbar({ name }: { name: string }) {
           {LINKS.map((l) => (
             <Link
               key={l.href}
-              href={l.href}
-              aria-current={pathname === l.href ? 'page' : undefined}
+              href={href(l.href)}
+              aria-current={pathname === href(l.href) ? 'page' : undefined}
               className="text-stone hover:text-ink aria-[current=page]:text-ink text-[0.95rem] transition-colors"
             >
               {l.label}
             </Link>
           ))}
-          {pathname !== '/reservar' && (
-            <ButtonLink href="/reservar" variant="secondary" className="h-10">
+          {!booking && (
+            <ButtonLink href={href('/reservar')} variant="secondary" className="h-10">
               Reservar
             </ButtonLink>
           )}
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
-          {pathname !== '/reservar' && (
-            <ButtonLink href="/reservar" className="h-10 px-4">
+          {!booking && (
+            <ButtonLink href={href('/reservar')} className="h-10 px-4">
               Reservar
             </ButtonLink>
           )}
@@ -88,7 +93,7 @@ export function Navbar({ name }: { name: string }) {
           <ul>
             {LINKS.map((l) => (
               <li key={l.href} className="border-line border-b">
-                <Link href={l.href} className="font-display flex h-14 items-center text-2xl">
+                <Link href={href(l.href)} className="font-display flex h-14 items-center text-2xl">
                   {l.label}
                 </Link>
               </li>

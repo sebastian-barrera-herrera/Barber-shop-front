@@ -49,4 +49,20 @@ describe('temas por negocio', () => {
       expect(contrastRatio(style['--on-brand'], p.brand)).toBeGreaterThanOrEqual(4.5);
     }
   });
+
+  it('cada estilo solo usa sus paletas', () => {
+    const base = {
+      animations: true,
+      fontPreset: 'editorial',
+      heroTitle: '',
+      heroSubtitle: '',
+      primaryColor: '#141412',
+      secondaryColor: '#A8854A',
+    } as const;
+    expect(resolveTheme({ ...base, preset: 'ingles' }, 'BARBER').paper).toBe(PRESETS.ingles.paper);
+    // Paleta de spa en una barbería → la clásica de barbería, y al revés.
+    expect(resolveTheme({ ...base, preset: 'spa' }, 'BARBER').paper).toBe(PRESETS.clasico.paper);
+    expect(resolveTheme({ ...base, preset: 'ebano' }, 'SPA').paper).toBe(PRESETS.studio.paper);
+    expect(resolveTheme(undefined, 'BARBER').scheme).toBe('dark');
+  });
 });

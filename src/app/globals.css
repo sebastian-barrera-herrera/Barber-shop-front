@@ -13,6 +13,13 @@
   --accent: #a07c42;
   --brand: #141412;
   --on-brand: #ffffff;
+  /* Cara tipográfica: la cambia el tema del negocio (spa = editorial, barbería = letrero). */
+  --display-face: var(--font-fraunces), 'Iowan Old Style', Georgia, serif;
+  --display-case: none;
+  --display-weight: 300;
+  --display-tracking: -0.02em;
+  --radius-btn: 9999px;
+  --radius-card: 24px;
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -25,7 +32,7 @@
   --color-accent: var(--accent);
   --color-brand: var(--brand);
   --color-on-brand: var(--on-brand);
-  --font-display: var(--font-fraunces), 'Iowan Old Style', Georgia, serif;
+  --font-display: var(--display-face);
   --font-sans: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
   --ease-soft: var(--ease-out-soft);
 }
@@ -41,6 +48,20 @@
   body {
     font-family: var(--font-sans);
     font-feature-settings: 'ss01', 'cv11';
+  }
+
+  /* Los títulos heredan la caja y el peso de la cara elegida. */
+  .font-display {
+    text-transform: var(--display-case);
+    letter-spacing: var(--display-tracking);
+  }
+
+  /* En el letrero de barbería, las cursivas del estilo editorial se vuelven acento en recto. */
+  [data-site-style='barber'] .font-display em,
+  [data-site-style='barber'] .font-display i,
+  [data-site-style='barber'] .font-display .italic {
+    font-style: normal;
+    color: var(--accent);
   }
 
   ::selection {

@@ -165,8 +165,11 @@ export interface Settings {
 
 export interface BusinessInfo {
   id: string;
+  slug: string;
   name: string;
   type: BusinessProfile['type'];
+  /** Estilo visual de todo el negocio (se elige al registrarse). */
+  style: BusinessProfile['style'];
   description: string | null;
   phone: string | null;
   email: string | null;

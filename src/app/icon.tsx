@@ -1,15 +1,12 @@
 import { ImageResponse } from 'next/og';
-import { publicApi, safely } from '@/lib/api';
-import { resolveTheme } from '@/lib/theme';
+import { PRESETS } from '@/lib/theme';
 
 export const size = { width: 64, height: 64 };
 export const contentType = 'image/png';
-export const revalidate = 3600;
 
-/** Favicon: inicial del negocio en tinta sobre papel. */
-export default async function Icon() {
-  const business = await safely(publicApi.business);
-  const theme = resolveTheme(business?.branding);
+/** Favicon de la plataforma. Cada empresa tiene el suyo en /<slug>. */
+export default function Icon() {
+  const t = PRESETS.studio;
   return new ImageResponse(
     <div
       style={{
@@ -18,14 +15,14 @@ export default async function Icon() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: theme.ink,
-        color: theme.paper,
+        background: t.ink,
+        color: t.paper,
         borderRadius: 14,
-        fontSize: 42,
+        fontSize: 40,
         fontFamily: 'Georgia, serif',
       }}
     >
-      {(business?.name ?? 'S').charAt(0).toUpperCase()}
+      {(process.env.NEXT_PUBLIC_PLATFORM_NAME || 'FILO').charAt(0)}
     </div>,
     size,
   );

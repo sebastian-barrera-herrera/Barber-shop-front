@@ -16,7 +16,7 @@ import {
   type BusinessInfo,
   type Settings,
 } from '@/lib/admin/hooks';
-import { PRESETS, contrastRatio } from '@/lib/theme';
+import { PRESETS, contrastRatio, presetsFor } from '@/lib/theme';
 import type { BrandPreset, OpeningDay } from '@/lib/types';
 
 type Section = 'negocio' | 'horario' | 'redes' | 'apariencia' | 'reservas';
@@ -394,6 +394,9 @@ const PRESET_INFO: Record<BrandPreset, { label: string; for: string; material: s
   spa: { label: 'Spa', for: 'Arena y salvia', material: 'piedra' },
   nails: { label: 'Uñas', for: 'Hueso y cereza', material: 'laca' },
   beauty: { label: 'Belleza', for: 'Papel y terracota', material: 'seda' },
+  clasico: { label: 'Clásica', for: 'Carbón y rojo de barbería', material: 'acero' },
+  ingles: { label: 'Inglesa', for: 'Verde oscuro y latón', material: 'latón' },
+  ebano: { label: 'Ébano', for: 'Negro y dorado', material: 'ébano' },
 };
 
 function BrandingSection({ value, info }: { value: Settings['branding']; info: BusinessInfo }) {
@@ -411,14 +414,16 @@ function BrandingSection({ value, info }: { value: Settings['branding']; info: B
       <section className="mb-8">
         <h2 className="font-display text-2xl">Estilo</h2>
         <p className="text-stone mt-1 text-sm">
-          Colores, tipografía y el objeto 3D de la portada cambian con el estilo.
+          {info.style === 'BARBER'
+            ? 'Paletas del diseño de barbería: cambian los colores de tu página y de este panel.'
+            : 'Colores, tipografía y el objeto 3D de la portada cambian con el estilo.'}
         </p>
         <div
           role="radiogroup"
           aria-label="Estilo"
           className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3"
         >
-          {(Object.keys(PRESETS) as BrandPreset[]).map((k) => {
+          {presetsFor(info.style).map((k) => {
             const p = PRESETS[k];
             return (
               <button

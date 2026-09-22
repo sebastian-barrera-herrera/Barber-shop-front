@@ -49,6 +49,8 @@ export interface AdminBusiness {
   id: string;
   slug: string;
   name: string;
+  /** Estilo visual del negocio: también viste este panel. */
+  style: BusinessProfile['style'];
   timezone: string;
   currency: string;
   country: string;
