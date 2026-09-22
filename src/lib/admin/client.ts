@@ -88,16 +88,18 @@ export async function adminFetch<T>(
   for (const [k, v] of Object.entries(query ?? {})) if (v !== undefined && v !== '') qs.set(k, v);
   const url = qs.size ? `${path}?${qs}` : path;
 
+  // FormData (archivos) viaja tal cual; lo demás, como JSON.
+  const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
   const send = () =>
     raw(url, {
       ...init,
       headers: {
         Accept: 'application/json',
-        ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+        ...(body !== undefined && !isForm ? { 'Content-Type': 'application/json' } : {}),
         ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         ...init.headers,
       },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: body === undefined ? undefined : isForm ? (body as FormData) : JSON.stringify(body),
     });
 
   let res = await send();

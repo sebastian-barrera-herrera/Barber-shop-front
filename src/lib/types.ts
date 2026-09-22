@@ -39,6 +39,7 @@ export interface BusinessProfile {
   };
   social: Partial<Record<'instagram' | 'facebook' | 'tiktok' | 'whatsapp' | 'website', string>>;
   openingHours: OpeningDay[];
+  onlinePayments?: boolean;
   booking: {
     slotStepMinutes: number;
     minAdvanceMinutes: number;
@@ -114,6 +115,7 @@ export interface PublicAppointment {
   notes: string | null;
   customer: { name: string };
   professional: { name: string; title: string | null; photoUrl: string | null };
+  paymentStatus: 'UNPAID' | 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
   canCancel: boolean;
   cancelDeadline: string;
 }
@@ -124,4 +126,12 @@ export interface BookingPayload {
   startsAt: string;
   customer: { name: string; phone: string; email?: string };
   notes?: string;
+}
+
+export interface PublicMessage {
+  id: string;
+  sender: 'CUSTOMER' | 'STAFF' | 'SYSTEM';
+  body: string;
+  readAt: string | null;
+  createdAt: string;
 }

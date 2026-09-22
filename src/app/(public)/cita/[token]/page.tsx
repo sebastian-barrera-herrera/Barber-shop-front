@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { AppointmentActions } from '@/components/booking/appointment-actions';
+import { AppointmentChat } from '@/components/booking/appointment-chat';
+import { PayButton } from '@/components/booking/pay-button';
 import { Ticket } from '@/components/booking/ticket';
 import { Unavailable } from '@/components/landing/unavailable';
 import { ButtonLink } from '@/components/ui/button';
@@ -20,11 +22,18 @@ export default async function AppointmentPage({
   searchParams,
 }: {
   params: Promise<{ token: string }>;
-  searchParams: Promise<{ nueva?: string }>;
+  searchParams: Promise<{ nueva?: string; pago?: string; id?: string }>;
 }) {
-  const [{ token }, { nueva }] = await Promise.all([params, searchParams]);
+  const [{ token }, { nueva, pago, id: transactionId }] = await Promise.all([params, searchParams]);
   const business = await safely(publicApi.business);
   if (!business) return <Unavailable />;
+
+  // Al volver de la pasarela: el servidor confirma el estado real con Wompi.
+  let paymentResult: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED' | null = null;
+  if (pago === '1' && transactionId && /^[\w-]{1,64}$/.test(transactionId)) {
+    paymentResult =
+      (await safely(() => publicApi.verifyPayment(token, transactionId)))?.status ?? null;
+  }
 
   let appointment;
   try {
@@ -38,6 +47,13 @@ export default async function AppointmentPage({
   const isNew = nueva === '1' && a.status !== 'CANCELLED';
   const firstName = a.customer.name.split(/\s+/)[0];
   const tz = a.timezone;
+
+  const showPay =
+    !!business.onlinePayments &&
+    business.booking.paymentMode !== 'NONE' &&
+    ['PENDING', 'CONFIRMED'].includes(a.status) &&
+    !['PAID', 'REFUNDED'].includes(a.paymentStatus) &&
+    paymentResult !== 'PAID';
 
   const heading = isNew
     ? `Te esperamos, ${firstName}.`
@@ -60,9 +76,26 @@ export default async function AppointmentPage({
           {heading}
         </h1>
         {lead && <p className="text-stone mt-5 max-w-md text-lg">{lead}</p>}
-        <div className="mt-6">
+        <div className="mt-6 flex flex-wrap items-center gap-3">
           <StatusBadge status={a.status} />
+          {a.paymentStatus === 'PAID' && (
+            <span className="rounded-full bg-[#3F8F5B]/12 px-3 py-1 text-sm text-[#2F6E46]">
+              Pagada
+            </span>
+          )}
         </div>
+        {paymentResult && (
+          <p
+            role="status"
+            className={`mt-6 rounded-xl border px-4 py-3 ${paymentResult === 'PAID' ? 'border-[#3F8F5B]/40 bg-[#3F8F5B]/[0.07]' : 'border-line bg-paper-2'}`}
+          >
+            {paymentResult === 'PAID'
+              ? '¡Pago recibido! Gracias.'
+              : paymentResult === 'PENDING'
+                ? 'Tu pago está en proceso. Te avisaremos cuando se apruebe.'
+                : 'El pago no se completó. Puedes intentarlo de nuevo.'}
+          </p>
+        )}
         <div className="mt-10">
           {a.status === 'CANCELLED' ? (
             <ButtonLink href="/reservar" size="lg">
@@ -72,6 +105,21 @@ export default async function AppointmentPage({
             <AppointmentActions appointment={a} business={business} token={token} />
           )}
         </div>
+        {showPay && (
+          <div className="mt-10">
+            <PayButton
+              token={token}
+              amountCents={a.priceCents}
+              currency={a.currency}
+              required={business.booking.paymentMode === 'REQUIRED'}
+            />
+          </div>
+        )}
+        {a.status !== 'CANCELLED' && (
+          <div className="mt-10">
+            <AppointmentChat token={token} businessName={business.name} timezone={tz} />
+          </div>
+        )}
       </div>
 
       <Ticket

@@ -25,7 +25,10 @@ export function RevenueChart({
   const pad = { top: 12, bottom: 28, left: 0, right: 0 };
   const plotH = H - pad.top - pad.bottom;
   const slot = W / data.length;
-  const barW = Math.min(36, slot - 2);
+  const barW = Math.max(2, Math.min(36, slot - 2));
+  // Rangos largos: etiquetas cada N barras, con el número del día.
+  const every = data.length > 14 ? Math.ceil(data.length / 8) : 1;
+  const longRange = data.length > 7;
 
   return (
     <figure className="relative">
@@ -33,7 +36,7 @@ export function RevenueChart({
         viewBox={`0 0 ${W} ${H}`}
         className="w-full overflow-visible"
         role="img"
-        aria-label="Ingresos de los últimos 7 días"
+        aria-label={`Ingresos de ${data.length} días`}
       >
         {[0.5, 1].map((t) => (
           <g key={t}>
@@ -77,14 +80,16 @@ export function RevenueChart({
                   opacity={hover === null || hover === i ? 1 : 0.45}
                 />
               )}
-              <text
-                x={i * slot + slot / 2}
-                y={H - 8}
-                textAnchor="middle"
-                className={`text-[11px] ${d.date === today ? 'fill-ink' : 'fill-stone'}`}
-              >
-                {d.date === today ? 'hoy' : p.weekday}
-              </text>
+              {(i % every === 0 || d.date === today) && (
+                <text
+                  x={i * slot + slot / 2}
+                  y={H - 8}
+                  textAnchor="middle"
+                  className={`text-[11px] ${d.date === today ? 'fill-ink' : 'fill-stone'}`}
+                >
+                  {d.date === today ? 'hoy' : longRange ? p.day : p.weekday}
+                </text>
+              )}
             </g>
           );
         })}
