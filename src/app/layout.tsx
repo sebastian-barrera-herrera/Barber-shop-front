@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Fraunces, Hanken_Grotesk, Saira_Semi_Condensed, Yellowtail } from 'next/font/google';
-import type { CSSProperties, ReactNode } from 'react';
-import { PRESETS, themeStyle } from '@/lib/theme';
+import type { ReactNode } from 'react';
+import { PRESETS } from '@/lib/theme';
 import './globals.css';
 
 /* Estilo Spa ("la libreta"): serif editorial + grotesca. */
@@ -62,10 +62,11 @@ export const viewport: Viewport = {
  */
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
+    // Sin tema en línea: el estilo en línea ganaría sobre el `:root` que inyecta cada negocio.
+    // Los valores por defecto viven en globals.css.
     <html
       lang="es"
       className={`${display.variable} ${body.variable} ${condensed.variable} ${script.variable}`}
-      style={themeStyle(PRESETS.studio) as CSSProperties}
     >
       <body className="bg-paper text-ink min-h-dvh">{children}</body>
     </html>

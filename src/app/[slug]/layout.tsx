@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import { DemoBar } from '@/components/platform/demo-bar';
 import { Footer } from '@/components/landing/footer';
 import { Navbar } from '@/components/landing/navbar';
 import { Unavailable } from '@/components/landing/unavailable';
 import { WhatsAppButton } from '@/components/landing/whatsapp-button';
 import { loadBusiness, requireBusiness } from '@/lib/business-server';
+import { isDemo } from '@/lib/demo';
 import { SiteProvider } from '@/lib/site';
 import { siteHref } from '@/lib/site-paths';
 import { resolveTheme, themeCss } from '@/lib/theme';
@@ -55,13 +57,14 @@ export default async function BusinessLayout({
     <SiteProvider slug={business.slug} style={business.style}>
       <style>{themeCss(theme)}</style>
       <div data-site-style={business.style === 'BARBER' ? 'barber' : 'spa'} className="contents">
+        {isDemo(slug) && <DemoBar style={business.style} />}
         <a
           href="#contenido"
           className="bg-ink text-paper sr-only z-50 rounded-full px-4 py-2 focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
         >
           Saltar al contenido
         </a>
-        <Navbar business={business} />
+        <Navbar business={business} demo={isDemo(slug)} />
         <main id="contenido">{children}</main>
         <Footer business={business} />
         {whatsapp && <WhatsAppButton phone={whatsapp} businessName={business.name} />}

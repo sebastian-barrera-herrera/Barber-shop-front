@@ -56,14 +56,6 @@
     letter-spacing: var(--display-tracking);
   }
 
-  /* En el letrero de barbería, las cursivas del estilo editorial se vuelven acento en recto. */
-  [data-site-style='barber'] .font-display em,
-  [data-site-style='barber'] .font-display i,
-  [data-site-style='barber'] .font-display .italic {
-    font-style: normal;
-    color: var(--accent);
-  }
-
   ::selection {
     background: var(--ink);
     color: var(--paper);
@@ -162,4 +154,13 @@
 
 @utility animate-print {
   animation: ticket-print 700ms var(--ease-out-soft) both;
+}
+
+/* En el letrero de barbería no hay cursivas: la palabra destacada va recta y en acento.
+   Va sin capa a propósito, para ganarle a la utilidad `italic`. */
+[data-site-style='barber'] .font-display em,
+[data-site-style='barber'] .font-display i,
+[data-site-style='barber'] .font-display .italic {
+  font-style: normal;
+  color: var(--accent);
 }

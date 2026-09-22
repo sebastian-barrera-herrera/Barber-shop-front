@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { BookingFlow } from '@/components/booking/booking-flow';
 import { Unavailable } from '@/components/landing/unavailable';
+import { DemoNotice } from '@/components/platform/demo-notice';
+import { isDemo } from '@/lib/demo';
 import { publicApi, safely } from '@/lib/api';
 import { requireBusiness } from '@/lib/business-server';
 
@@ -21,6 +23,7 @@ export default async function BookingPage({ params }: { params: Promise<{ slug: 
     safely(() => api.professionals(undefined, 60)),
   ]);
   if (!business || !catalog) return <Unavailable />;
+  if (isDemo(slug)) return <DemoNotice style={business.style} />;
 
   return (
     <Suspense>

@@ -13,7 +13,7 @@ const LINKS = [
   { href: '/contacto', label: 'Contacto' },
 ];
 
-export function Navbar({ business }: { business: BusinessProfile }) {
+export function Navbar({ business, demo = false }: { business: BusinessProfile; demo?: boolean }) {
   const pathname = usePathname();
   const { href } = useSite();
   const name = business.name;
@@ -31,7 +31,7 @@ export function Navbar({ business }: { business: BusinessProfile }) {
 
   return (
     <header
-      className={`bg-paper/92 sticky top-0 z-40 backdrop-blur-sm transition-[border-color] duration-300 ${
+      className={`bg-paper/92 z-40 backdrop-blur-sm transition-[border-color] duration-300 ${demo ? '' : 'sticky top-0'} ${
         scrolled || open ? 'border-line border-b' : 'border-b border-transparent'
       }`}
     >

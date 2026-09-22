@@ -135,7 +135,8 @@ function RegisterForm() {
             Crea tu página <span className="italic">de reservas</span>
           </h1>
           <p className="text-stone mt-4 max-w-md">
-            En dos minutos tienes tu enlace para compartir y tu agenda lista.
+            En dos minutos tienes tu enlace para compartir y tu agenda lista. 14 días gratis, sin
+            tarjeta.
           </p>
 
           <form onSubmit={submit} noValidate className="mt-10 max-w-md space-y-6">
